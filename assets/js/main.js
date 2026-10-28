@@ -246,7 +246,7 @@ function render(id, body) {
       break;
     }
     case "image": {
-      body.innerHTML = `<figure class="viewer" style="margin:0"><img src="${item.src}" alt=""><p></p></figure>`;
+      body.innerHTML = `<figure class="viewer"><img src="${item.src}" alt=""><p></p></figure>`;
       $("img", body).alt = item.caption;
       $("p", body).textContent = item.caption;
       break;
