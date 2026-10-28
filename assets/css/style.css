@@ -231,6 +231,15 @@ img { display: block; max-width: 100%; }
 .term .t-accent { color: #79c0ff; }
 .term .t-dim { color: #8b949e; }
 .term .t-err { color: #ff7b72; }
+.term .t-ok { color: #3fb950; }
+.term .t-banner { display: block; margin: 4px 0 14px; color: #79c0ff; font: 12px/1.05 var(--mono); white-space: pre; overflow: hidden; }
+.term strong { color: #fff; }
+.t-cmd {
+  font: inherit; color: #79c0ff; text-decoration: underline; text-decoration-color: rgba(121, 192, 255, .35);
+  text-underline-offset: 3px; cursor: pointer;
+}
+.t-cmd:hover { color: #a5d6ff; text-decoration-color: currentColor; }
+@media (max-width: 700px) { .term .t-banner { font-size: 7px; } .term { font-size: 12px; } }
 .term a { color: #79c0ff; }
 
 /* ---------- Dock ---------- */

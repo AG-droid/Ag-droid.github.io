@@ -39,7 +39,7 @@ const FS = {
   "c-github":    { name: "GitHub", type: "link", href: "https://github.com/AG-droid" },
 
   photos:        { name: "Photos", type: "photos", w: 720, h: 520 },
-  terminal:      { name: "Terminal", type: "terminal", w: 640, h: 420 },
+  terminal:      { name: "Terminal", type: "terminal", w: 760, h: 640 },
 };
 const DESKTOP = FS.home.children;
 const DOCK = ["home", "experience", "research", "photos", "terminal", "|", "cv", "contact"];
@@ -296,7 +296,7 @@ function terminal(id, body) {
   const history = [];
   let hIndex = 0;
 
-  const print = (html = "") => { out.insertAdjacentHTML("beforeend", html + "\n"); body.scrollTop = body.scrollHeight; };
+  const print = (html = "", scroll = true) => { out.insertAdjacentHTML("beforeend", html + "\n"); if (scroll) body.scrollTop = body.scrollHeight; };
   const echo = (cmd) => {
     const line = document.createElement("span");
     line.innerHTML = `<span class="term__prompt">anmol@kcl:<b>~</b>$</span> `;
@@ -309,18 +309,22 @@ function terminal(id, body) {
       || Object.keys(FS).find((k) => FS[k].name.toLowerCase().startsWith(q));
   };
 
+  // a command name you can click instead of typing
+  const cmd = (name, pad = 12) => `<button type="button" class="t-cmd" data-cmd="${name}">${name}</button>${" ".repeat(Math.max(1, pad - name.length))}`;
+
   const commands = {
     help: () => print(
-`<span class="t-accent">Available commands</span>
-  whoami        who is this?
-  ls            list what's on the desktop
-  open &lt;name&gt;   open a file or folder  (e.g. open research)
-  research      my current research
-  experience    roles and skills
-  cv            my CV
-  contact       how to reach me
-  neofetch      system info
-  clear         clear the screen`),
+`<span class="t-accent">Available commands</span> <span class="t-dim">(type them, or click)</span>
+  ${cmd("whoami")}who is this?
+  ${cmd("ls")}list what's on the desktop
+  open &lt;name&gt;  open a file or folder  <span class="t-dim">(e.g. open research)</span>
+  ${cmd("research")}what I'm working on now
+  ${cmd("experience")}where I've worked
+  ${cmd("cv")}open my CV
+  ${cmd("email")}send me a message
+  ${cmd("contact")}links to find me
+  ${cmd("neofetch")}system info
+  ${cmd("clear")}clear the screen`),
     whoami: () => print("Anmol Goyal: maths student at King's College London,\nvisiting student AI researcher at Oxford Dynamics."),
     ls: () => print(DESKTOP.map((k) => (FS[k].type === "folder" ? `<span class="t-accent">${FS[k].name}/</span>` : FS[k].name)).join("   ")),
     open: (arg) => {
@@ -356,17 +360,21 @@ function terminal(id, body) {
   commands.cd = commands.open;
   commands.cat = commands.open;
 
+  const run = (raw) => {
+    echo(raw);
+    if (raw) { history.push(raw); hIndex = history.length; }
+    const [name, ...rest] = raw.split(/\s+/);
+    if (!name) return;
+    const fn = commands[name.toLowerCase()];
+    fn ? fn(rest.join(" ")) : print(`<span class="t-err">command not found: ${escapeHtml(name)}</span>. Try ${cmd("help", 0)}`);
+    body.scrollTop = body.scrollHeight;
+  };
+
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       const raw = input.value.trim();
       input.value = "";
-      echo(raw);
-      if (raw) { history.push(raw); hIndex = history.length; }
-      const [cmd, ...rest] = raw.split(/\s+/);
-      if (!cmd) return;
-      const fn = commands[cmd.toLowerCase()];
-      fn ? fn(rest.join(" ")) : print(`<span class="t-err">command not found: ${escapeHtml(cmd)}</span>. Try <span class="t-accent">help</span>.`);
-      body.scrollTop = body.scrollHeight;
+      run(raw);
     } else if (e.key === "ArrowUp" && hIndex > 0) {
       input.value = history[--hIndex]; e.preventDefault();
     } else if (e.key === "ArrowDown") {
@@ -374,10 +382,54 @@ function terminal(id, body) {
       input.value = history[hIndex] || "";
     }
   });
-  term.addEventListener("click", () => { if (!window.getSelection().toString()) input.focus(); });
+  term.addEventListener("click", (e) => {
+    const c = e.target.closest(".t-cmd");
+    if (c) { run(c.dataset.cmd); return; }
+    if (!window.getSelection().toString()) input.focus();
+  });
 
-  print(`Welcome to <span class="t-accent">AnmolOS</span>. Type <span class="t-accent">help</span> to see what you can do.\n`);
+  welcome(print, cmd);
   wins.get(id).focusInput = () => { if (!mobile.matches) input.focus({ preventScroll: true }); };
+}
+
+// Greeting shown when the terminal first opens, printed line by line
+const BANNER = [
+  " █████╗ ███╗   ██╗███╗   ███╗ ██████╗ ██╗     ",
+  "██╔══██╗████╗  ██║████╗ ████║██╔═══██╗██║     ",
+  "███████║██╔██╗ ██║██╔████╔██║██║   ██║██║     ",
+  "██╔══██║██║╚██╗██║██║╚██╔╝██║██║   ██║██║     ",
+  "██║  ██║██║ ╚████║██║ ╚═╝ ██║╚██████╔╝███████╗",
+  "╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝",
+];
+
+function welcome(print, cmd) {
+  const lines = [
+    `<span class="t-banner">${BANNER.join("\n")}</span>`,
+    `Welcome to <span class="t-accent">AnmolOS</span>, the personal site of <strong>Anmol Goyal</strong>.`,
+    "",
+    `<span class="t-dim">▸</span> Maths with Statistics student @ King's College London`,
+    `<span class="t-dim">▸</span> Visiting Student AI Researcher @ Oxford Dynamics`,
+    `<span class="t-dim">▸</span> Into robotics, physical AI and liquid neural networks`,
+    "",
+    `This site works like a little computer. You can:`,
+    `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, Projects, CV`,
+    `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
+    `  <span class="t-ok">✓</span> or stay right here and run a command:`,
+    "",
+    `      ${cmd("research")}what I'm working on now`,
+    `      ${cmd("experience")}where I've worked`,
+    `      ${cmd("cv")}open my CV`,
+    `      ${cmd("email")}send me a message`,
+    `      ${cmd("help")}everything else`,
+    "",
+    `<span class="t-dim">Type a command and press Enter, or just click one.</span>`,
+    "",
+  ];
+  // keep the banner in view while it prints; later commands scroll as usual
+  if (reducedMotion) { lines.forEach((l) => print(l, false)); return; }
+  let i = 0;
+  const next = () => { if (i < lines.length) { print(lines[i++], false); setTimeout(next, i === 1 ? 250 : 35); } };
+  next();
 }
 
 function escapeHtml(s) {
@@ -541,4 +593,4 @@ buildDesktop();
 buildDock();
 tickClock();
 setInterval(tickClock, 15000);
-boot(() => { if (!mobile.matches) open("about"); });
+boot(() => open("terminal"));
