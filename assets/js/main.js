@@ -474,8 +474,10 @@ function tickClock() {
 }
 
 // "New Message" window. GitHub Pages can't send mail, so the form posts to
-// FormSubmit, which forwards it to my inbox with the sender as reply-to.
-const FORM_ENDPOINT = `https://formsubmit.co/ajax/${EMAIL}`;
+// Web3Forms, which forwards it to my inbox with the sender as reply-to.
+// The access key is public by design: it can only send mail to me.
+const FORM_ENDPOINT = "https://api.web3forms.com/submit";
+const FORM_KEY = "6adc672b-978b-426d-8ddf-ef1e757f6979";
 
 // A draft that failed to send, restored the next time the compose window opens
 let draft = null;
@@ -534,12 +536,12 @@ async function sendMessage({ email, subject, message }) {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
+        access_key: FORM_KEY,
+        subject: `Website: ${subject || "New message"}`,
+        from_name: "anmol-goyal.com",
         email,
+        replyto: email,
         message,
-        _subject: `Website: ${subject || "New message"}`,
-        _replyto: email,
-        _template: "table",
-        _captcha: "false",
       }),
     });
     const data = await res.json().catch(() => ({}));
