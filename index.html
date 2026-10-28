@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Anmol Goyal</title>
-  <meta name="description" content="Anmol Goyal — developer and builder. Projects, experience and achievements.">
-  <meta property="og:title" content="Anmol Goyal">
-  <meta property="og:description" content="Developer and builder. Projects, experience and achievements.">
-  <meta property="og:image" content="https://anmol-goyal.com/assets/img/profile.jpeg">
+  <meta name="description" content="Anmol Goyal — Mathematics with Statistics at King's College London and Visiting Student AI Researcher at Oxford Dynamics, working on robotics and physical AI.">
+  <meta property="og:title" content="Anmol Goyal — Robotics &amp; AI">
+  <meta property="og:description" content="Maths student at King's College London. Visiting Student AI Researcher at Oxford Dynamics.">
+  <meta property="og:image" content="https://anmol-goyal.com/assets/img/oxford-dynamics/team-harwell.jpg">
   <meta name="theme-color" content="#fafaf9">
   <link rel="icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
   <script defer src="assets/js/main.js"></script>
 </head>
@@ -21,9 +21,9 @@
     <div class="nav__inner">
       <a href="#top" class="nav__brand">AG</a>
       <nav class="nav__links" aria-label="Primary">
-        <a href="#about">About</a>
+        <a href="#robotics">Robotics &amp; AI</a>
         <a href="#experience">Experience</a>
-        <a href="#projects">Projects</a>
+        <a href="#leadership">Leadership</a>
         <a href="#contact">Contact</a>
       </nav>
       <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
@@ -39,15 +39,15 @@
       <canvas class="hero__field" aria-hidden="true"></canvas>
       <div class="container hero__inner">
         <div class="hero__text reveal">
-          <p class="eyebrow">Hello, I'm</p>
+          <p class="status"><span class="status__dot"></span>Visiting Student AI Researcher at Oxford Dynamics</p>
           <h1>Anmol Goyal<span class="accent">.</span></h1>
           <p class="hero__lede">
-            I build things with code — from small games to <em>data-driven tools</em>.
-            Curious about software, finance and how the two meet.
+            Mathematics with Statistics at King's College London, working where maths meets
+            <em>robotics &amp; physical AI</em>.
           </p>
           <div class="hero__cta">
-            <a class="btn btn--solid" href="#projects">See my work</a>
-            <a class="btn" href="mailto:anmolgoyal2006@gmail.com">Get in touch</a>
+            <a class="btn btn--solid" href="#robotics">See my work</a>
+            <a class="btn" href="mailto:anmolxgoyal@gmail.com">Get in touch</a>
           </div>
           <ul class="socials" aria-label="Social links">
             <li><a href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener" aria-label="LinkedIn">
@@ -56,156 +56,269 @@
             <li><a href="https://github.com/AG-droid" target="_blank" rel="noopener" aria-label="GitHub">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z"/></svg>
             </a></li>
-            <li><a href="mailto:anmolgoyal2006@gmail.com" aria-label="Email">
+            <li><a href="mailto:anmolxgoyal@gmail.com" aria-label="Email">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m3 6 9 7 9-7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
             </a></li>
           </ul>
         </div>
-        <figure class="hero__portrait reveal">
-          <img src="assets/img/profile.jpeg" alt="Portrait of Anmol Goyal" width="377" height="498">
+        <figure class="hero__visual reveal">
+          <img src="assets/img/oxford-dynamics/robot-arm.jpg" alt="A six-degree-of-freedom robotic arm with a gripper in the Oxford Dynamics lab" width="480" height="640">
+          <figcaption><span class="mono">6-DoF</span> arm · Oxford Dynamics, Harwell</figcaption>
         </figure>
       </div>
     </section>
 
-    <!-- About -->
-    <section id="about" class="section">
-      <div class="container grid-2">
-        <h2 class="section__title reveal"><span class="num">01</span>About</h2>
-        <div class="prose reveal">
-          <p>
-            My journey into computing began in 2020. Stuck at home during the pandemic, I tried my hand at
-            music, art and theatre — but nothing grabbed me like programming. The idea that you can think up
-            some logic, write it down, and <em>presto</em>, a new thing exists in the world, still feels a
-            little like wizardry.
-          </p>
-          <p>
-            Since then I've led my school's Computer Science Club, competed in inter-school programming
-            events, and kept building — games, web apps, and lately data tools in Python.
-          </p>
-          <dl class="facts">
-            <div><dt>Based in</dt><dd>Gurugram, India</dd></div>
-            <div><dt>Email</dt><dd><a href="mailto:anmolgoyal2006@gmail.com">anmolgoyal2006@gmail.com</a></dd></div>
-          </dl>
+    <!-- Robotics & AI feature -->
+    <section id="robotics" class="section">
+      <div class="container">
+        <div class="grid-2">
+          <h2 class="section__title reveal"><span class="num">01</span>Robotics &amp; AI</h2>
+          <div class="prose reveal">
+            <p>
+              In summer 2026 I spent 12 weeks at <strong>Oxford Dynamics</strong> on the Harwell Science and
+              Innovation Campus as a Robotics Intern. I arrived as a maths student with no robotics background.
+              I left having built a controller for a real robot arm and a simulated twin of it.
+            </p>
+            <p>
+              I'm now continuing as a <strong>Visiting Student AI Researcher</strong>, running my final-year
+              project on <em>Liquid Neural Networks</em> in collaboration with King's College London and
+              Oxford Dynamics' research division.
+            </p>
+          </div>
         </div>
+
+        <ol class="highlights">
+          <li class="reveal">
+            <span class="mono highlights__k">01</span>
+            <h3>Arm mechanics</h3>
+            <p>Learned the kinematics and mechanics of a 6-DoF robotic arm from the ground up.</p>
+          </li>
+          <li class="reveal">
+            <span class="mono highlights__k">02</span>
+            <h3>ROS2 controller</h3>
+            <p>Picked up ROS2 and MoveIt from scratch and built a controller for the arm.</p>
+          </li>
+          <li class="reveal">
+            <span class="mono highlights__k">03</span>
+            <h3>Digital twin</h3>
+            <p>Recreated the arm as a simulated twin in NVIDIA Isaac Sim.</p>
+          </li>
+          <li class="reveal">
+            <span class="mono highlights__k">04</span>
+            <h3>Research</h3>
+            <p>Saw the company's work on VLAs and VLMs, and now research Liquid Neural Networks.</p>
+          </li>
+        </ol>
+
+        <div class="mosaic reveal">
+          <figure class="mosaic__main">
+            <img src="assets/img/oxford-dynamics/team-harwell.jpg" alt="The Oxford Dynamics robotics team outside their offices at Harwell" loading="lazy" width="800" height="599">
+            <figcaption>The robotics team at Harwell</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/img/oxford-dynamics/field-robot.jpg" alt="A tracked field robot carrying a robotic arm, being tested outdoors" loading="lazy" width="480" height="360">
+            <figcaption>Field testing</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/img/oxford-dynamics/isaac-sim.jpg" alt="NVIDIA Isaac Sim showing a simulated quadruped robot on grass" loading="lazy" width="480" height="293">
+            <figcaption>NVIDIA Isaac Sim</figcaption>
+          </figure>
+        </div>
+
+        <blockquote class="quote reveal">
+          <p>“The part I didn't expect to matter so much: the gap between code you write alone for a
+          university project and code that ships in a real codebase.”</p>
+          <cite>On working in a team repo, to real engineering standards</cite>
+        </blockquote>
       </div>
     </section>
 
-    <!-- Experience & achievements -->
+    <!-- Experience -->
     <section id="experience" class="section">
       <div class="container grid-2">
-        <h2 class="section__title reveal"><span class="num">02</span>Experience &amp; Achievements</h2>
+        <h2 class="section__title reveal"><span class="num">02</span>Experience</h2>
         <ol class="timeline">
           <li class="reveal">
-            <span class="timeline__date">2021</span>
+            <span class="timeline__date">Sep 2026 — Now</span>
             <div>
-              <h3>Head, Computer Science Club</h3>
-              <p class="muted">G.D. Goenka Public School, Gurugram</p>
-              <p>Appointed to lead the school's computer science club — organising sessions and projects for fellow students.</p>
-              <a class="link" href="assets/img/certificates/cs-club-head-appointment.jpg" target="_blank" rel="noopener">View letter</a>
+              <h3>Visiting Student AI Researcher</h3>
+              <p class="muted">Oxford Dynamics · Harwell</p>
+              <p>Final-year industry research project on Liquid Neural Networks, in collaboration with KCL.</p>
             </div>
           </li>
           <li class="reveal">
-            <span class="timeline__date">Aug 2021</span>
+            <span class="timeline__date">Jun — Sep 2026</span>
             <div>
-              <h3>Pygrammer — Force Fest 2K21</h3>
-              <p class="muted">Apeejay School, Panchsheel Park</p>
-              <p>Represented my school in the inter-school Python programming event.</p>
-              <a class="link" href="assets/img/certificates/force-fest-2021.png" target="_blank" rel="noopener">View certificate</a>
+              <h3>Robotics Software Engineering Intern</h3>
+              <p class="muted">Oxford Dynamics · Harwell</p>
+              <p>ROS2 and MoveIt control for a 6-DoF arm, plus a digital twin in NVIDIA Isaac Sim. Shipped work in a shared team codebase.</p>
             </div>
           </li>
           <li class="reveal">
-            <span class="timeline__date">Nov 2020</span>
+            <span class="timeline__date">Jul 2025 — Jun 2026</span>
             <div>
-              <h3>Cyber Security (Short Course)</h3>
-              <p class="muted">Course completion</p>
-              <p>Completed an assessed online course covering the fundamentals of cyber security.</p>
-              <a class="link" href="assets/img/certificates/cyber-security-2020.jpeg" target="_blank" rel="noopener">View certificate</a>
+              <h3>IBM Z Student Ambassador &amp; President, IBM Z KCL Society</h3>
+              <p class="muted">IBM · King's College London</p>
+              <p>Represented IBM Z and mainframe technology on campus. Ran workshops and watch parties, grew a mainframe club, and hosted an industry speaker series with Amazon and IBM.</p>
+            </div>
+          </li>
+          <li class="reveal">
+            <span class="timeline__date">Jan 2025 — May 2026</span>
+            <div>
+              <h3>Founder &amp; President</h3>
+              <p class="muted">KCL Financial Literacy Society</p>
+              <p>Founded a society teaching students practical finance, from budgeting to investing.</p>
+            </div>
+          </li>
+          <li class="reveal">
+            <span class="timeline__date">Nov 2025 — Sep 2026</span>
+            <div>
+              <h3>Student Ambassador</h3>
+              <p class="muted">King's College London</p>
+              <p>Subject Ambassador for Mathematics with Statistics and Online Events Assistant for global recruitment webinars.</p>
+            </div>
+          </li>
+          <li class="reveal">
+            <span class="timeline__date">Oct 2025 — Sep 2026</span>
+            <div>
+              <h3>NMES Student Representative</h3>
+              <p class="muted">King's College London</p>
+              <p>Selected to represent peers in the Faculty of Natural, Mathematical &amp; Engineering Sciences. Turned survey data into recommendations for faculty.</p>
+            </div>
+          </li>
+          <li class="reveal">
+            <span class="timeline__date">Aug 2025</span>
+            <div>
+              <h3>Online Incubator Participant</h3>
+              <p class="muted">King's Entrepreneurship Institute</p>
+              <p>Developed and validated a startup concept through mentorship and workshops.</p>
+            </div>
+          </li>
+          <li class="reveal">
+            <span class="timeline__date">Aug 2024 — Jan 2025</span>
+            <div>
+              <h3>Tech Volunteer</h3>
+              <p class="muted">CodeYourFuture</p>
             </div>
           </li>
         </ol>
       </div>
     </section>
 
-    <!-- Skills -->
+    <!-- Leadership -->
+    <section id="leadership" class="section">
+      <div class="container">
+        <div class="grid-2">
+          <h2 class="section__title reveal"><span class="num">03</span>Leadership</h2>
+          <div class="prose reveal">
+            <p class="kicker mono">Feb 2026 · Strand Campus, KCL</p>
+            <h3 class="feature-title">Industry speaker series with Amazon &amp; IBM</h3>
+            <p>
+              As President of the IBM Z KCL Society, I spent months planning a two-day series on how AI is
+              actually built and deployed in production. It ran with the KCL AI Society and KCL Quant Society.
+              Day one brought Amazon on applied generative AI. Day two brought IBM on AI and enterprise computing.
+            </p>
+          </div>
+        </div>
+        <div class="duo reveal">
+          <figure>
+            <img src="assets/img/events/amazon-fireside.jpg" alt="Anmol hosting a fireside chat with two Amazon speakers on stage" loading="lazy" width="800" height="450">
+            <figcaption><span class="mono">Day 1</span> Hosting the Amazon fireside chat</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/img/events/ibm-session.jpg" alt="IBM speaker Steve Wallin in conversation on stage, under an IBM Z KCL Chapter banner" loading="lazy" width="800" height="600">
+            <figcaption><span class="mono">Day 2</span> AI &amp; enterprise computing with IBM</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills & education -->
     <section id="skills" class="section">
       <div class="container grid-2">
-        <h2 class="section__title reveal"><span class="num">03</span>Skills</h2>
-        <div class="skills reveal">
-          <div class="skills__group">
-            <h3>Languages</h3>
-            <ul class="chips"><li>Python</li><li>Java</li><li>JavaScript</li><li>HTML</li><li>CSS</li></ul>
+        <h2 class="section__title reveal"><span class="num">04</span>Skills &amp; Education</h2>
+        <div class="stack">
+          <div class="skills reveal">
+            <div class="skills__group">
+              <h3>Robotics &amp; AI</h3>
+              <ul class="chips"><li>ROS2</li><li>MoveIt</li><li>NVIDIA Isaac Sim</li><li>Physical AI</li><li>Liquid Neural Networks</li></ul>
+            </div>
+            <div class="skills__group">
+              <h3>Maths &amp; Programming</h3>
+              <ul class="chips"><li>Statistics</li><li>Python</li><li>pandas</li><li>Java</li><li>JavaScript</li><li>React</li><li>Git</li></ul>
+            </div>
+            <div class="skills__group">
+              <h3>Systems</h3>
+              <ul class="chips"><li>IBM Z</li><li>LinuxONE</li><li>Linux</li></ul>
+            </div>
+            <div class="skills__group">
+              <h3>Languages</h3>
+              <ul class="chips"><li>English</li><li>Hindi</li><li>Spanish (elementary)</li></ul>
+            </div>
           </div>
-          <div class="skills__group">
-            <h3>Frameworks &amp; Libraries</h3>
-            <ul class="chips"><li>React</li><li>AngularJS</li><li>Bootstrap</li><li>pandas</li><li>Selenium</li></ul>
-          </div>
-          <div class="skills__group">
-            <h3>Tools</h3>
-            <ul class="chips"><li>Git</li><li>GitHub</li><li>VS Code</li></ul>
+
+          <div class="cards reveal">
+            <div class="card">
+              <p class="card__k mono">2024 — 2027</p>
+              <h3>King's College London</h3>
+              <p class="muted">BSc Mathematics with Statistics · final year</p>
+            </div>
+            <div class="card">
+              <p class="card__k mono">Certifications</p>
+              <h3>IBM Z Xplore — Concepts</h3>
+              <p class="muted">IBM Z &amp; LinuxONE Community Contributor 2025 (Level 1)</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Projects -->
+    <!-- Side projects -->
     <section id="projects" class="section">
-      <div class="container">
-        <h2 class="section__title reveal"><span class="num">04</span>Selected Projects</h2>
-        <div class="projects">
-          <a class="project reveal" href="https://github.com/AG-droid/QuantBox" target="_blank" rel="noopener">
-            <div class="project__art project__art--quant" aria-hidden="true">
-              <svg viewBox="0 0 200 100" preserveAspectRatio="none"><polyline points="0,80 20,70 40,74 60,52 80,58 100,40 120,46 140,28 160,34 180,16 200,22"/></svg>
-            </div>
-            <div class="project__body">
-              <h3>QuantBox <span class="arrow">↗</span></h3>
-              <p>A news-scraping pipeline that pulls headlines and article links with Selenium and structures them in pandas for analysis.</p>
-              <ul class="tags"><li>Python</li><li>Selenium</li><li>pandas</li></ul>
-            </div>
-          </a>
-          <a class="project reveal" href="https://github.com/AG-droid/React-JS" target="_blank" rel="noopener">
-            <div class="project__art project__art--react" aria-hidden="true">
-              <svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="15"/><ellipse cx="50" cy="50" rx="40" ry="15" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="40" ry="15" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="5"/></svg>
-            </div>
-            <div class="project__body">
-              <h3>React Experiments <span class="arrow">↗</span></h3>
-              <p>A to-do app and other experiments built while learning React and modern front-end development.</p>
-              <ul class="tags"><li>React</li><li>JavaScript</li></ul>
-            </div>
-          </a>
-          <a class="project reveal" href="https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" target="_blank" rel="noopener">
-            <div class="project__art" aria-hidden="true"><img src="assets/img/projects/space-invaders.jpeg" alt="" loading="lazy"></div>
-            <div class="project__body">
-              <h3>Space Invaders <span class="arrow">↗</span></h3>
-              <p>A from-scratch take on the retro arcade classic — movement, shooting, collisions, sound and scoring.</p>
-              <ul class="tags"><li>Python</li><li>Turtle</li></ul>
-            </div>
-          </a>
-          <a class="project reveal" href="https://github.com/AG-droid/Projects/blob/master/Dino_Wrld.py" target="_blank" rel="noopener">
-            <div class="project__art" aria-hidden="true"><img src="assets/img/projects/dino.jpeg" alt="" loading="lazy"></div>
-            <div class="project__body">
-              <h3>Dino Adventure <span class="arrow">↗</span></h3>
-              <p>A text adventure where you name, feed and calm your pet dinosaurs — and solve riddles when things go wrong.</p>
-              <ul class="tags"><li>Python</li><li>CLI</li></ul>
-            </div>
-          </a>
-        </div>
+      <div class="container grid-2">
+        <h2 class="section__title reveal"><span class="num">05</span>Side Projects</h2>
+        <ul class="rows reveal">
+          <li><a href="https://github.com/AG-droid/QuantBox" target="_blank" rel="noopener">
+            <span class="rows__name">QuantBox</span>
+            <span class="rows__desc">News-scraping pipeline with Selenium and pandas</span>
+            <span class="arrow">↗</span>
+          </a></li>
+          <li><a href="https://github.com/AG-droid/React-JS" target="_blank" rel="noopener">
+            <span class="rows__name">React experiments</span>
+            <span class="rows__desc">To-do app and front-end practice in React</span>
+            <span class="arrow">↗</span>
+          </a></li>
+          <li><a href="https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" target="_blank" rel="noopener">
+            <span class="rows__name">Space Invaders</span>
+            <span class="rows__desc">The arcade classic, rebuilt in Python Turtle</span>
+            <span class="arrow">↗</span>
+          </a></li>
+          <li><a href="https://github.com/AG-droid" target="_blank" rel="noopener">
+            <span class="rows__name">More on GitHub</span>
+            <span class="rows__desc">@AG-droid</span>
+            <span class="arrow">↗</span>
+          </a></li>
+        </ul>
       </div>
     </section>
 
     <!-- Contact -->
     <section id="contact" class="section contact">
       <div class="container contact__inner reveal">
-        <p class="eyebrow">05 — Contact</p>
-        <h2 class="contact__title">Let's build something<span class="accent">.</span></h2>
-        <p class="muted">Open to internships, collaborations and good conversations. My inbox is always open.</p>
-        <a class="btn btn--solid btn--lg" href="mailto:anmolgoyal2006@gmail.com">anmolgoyal2006@gmail.com</a>
+        <p class="eyebrow">06 — Contact</p>
+        <h2 class="contact__title">Let's talk robots<span class="accent">.</span></h2>
+        <p class="muted">Always happy to connect and learn from more people. Drop me an email or a DM on LinkedIn.</p>
+        <div class="hero__cta">
+          <a class="btn btn--solid btn--lg" href="mailto:anmolxgoyal@gmail.com">anmolxgoyal@gmail.com</a>
+          <a class="btn btn--lg" href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">LinkedIn ↗</a>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="container footer__inner">
-      <span>© <span id="year">2026</span> Anmol Goyal</span>
+      <span>© <span id="year">2026</span> Anmol Goyal · London</span>
       <span class="muted">Designed &amp; built by hand.</span>
     </div>
   </footer>
