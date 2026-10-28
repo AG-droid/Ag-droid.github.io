@@ -3,120 +3,102 @@
 % then copy build/Anmol_Goyal_CV.pdf to ../assets/cv/
 \documentclass[10pt,a4paper]{article}
 
-\usepackage[a4paper,margin=1.45cm,top=1.15cm,bottom=1.0cm]{geometry}
+\usepackage[a4paper,margin=1.6cm,top=1.4cm,bottom=1.3cm]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[default]{sourcesanspro}
+\usepackage[scaled=1.04]{XCharter}
 \usepackage{microtype}
-\usepackage{xcolor}
 \usepackage{titlesec}
-\usepackage[inline]{enumitem}
+\usepackage{enumitem}
 \usepackage{tabularx}
-\usepackage{fontawesome5}
 \usepackage[hidelinks,pdftitle={Anmol Goyal - CV},pdfauthor={Anmol Goyal}]{hyperref}
-
-\definecolor{accent}{HTML}{1F3A68}
-\definecolor{muted}{HTML}{5B6573}
-\definecolor{rule}{HTML}{C9D1DC}
 
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
-\linespread{1.0}
 
-% Section headings: small caps in the accent colour with a thin rule
-\titleformat{\section}{\large\scshape\color{accent}\bfseries}{}{0pt}{}[\vspace{-6pt}{\color{rule}\rule{\linewidth}{0.6pt}}]
-\titlespacing*{\section}{0pt}{7pt}{4pt}
+% Section headings: small caps with a full-width rule underneath
+\titleformat{\section}{\large\scshape}{}{0pt}{}[\vspace{-5pt}\rule{\linewidth}{0.5pt}]
+\titlespacing*{\section}{0pt}{11pt}{5pt}
 
-\setlist[itemize]{leftmargin=1.1em,itemsep=0.6pt,topsep=1.5pt,parsep=0pt,label={\color{accent}\small\textbullet}}
+\setlist[itemize]{leftmargin=1.2em,itemsep=1pt,topsep=2pt,parsep=0pt,label=\textbullet}
 
 % \role{Organisation}{Location}{Title}{Dates}
 \newcommand{\role}[4]{%
-  \textbf{#1}\hfill{\small\color{muted}#2}\\
-  \textit{#3}\hfill{\small\color{muted}#4}\par\vspace{1pt}}
+  \textbf{#1}\hfill #2\\
+  \textit{#3}\hfill\textit{#4}\par}
 % \subrole{Title}{Dates}: a second role at the same organisation
-\newcommand{\subrole}[2]{\vspace{3pt}\textit{#1}\hfill{\small\color{muted}#2}\par\vspace{1pt}}
-% \entry{Bold lead}{rest of line}{Dates}: one-line leadership entries
-\newcommand{\entry}[3]{\begin{tabularx}{\linewidth}{@{}X@{\hspace{8pt}}r@{}}\textbf{#1}#2 & {\small\color{muted}#3}\end{tabularx}\par\vspace{1pt}}
-
-\newcommand{\contact}[3]{\href{#1}{{\color{accent}#2}\hspace{0.35em}#3}}
-\newcommand{\sep}{\hspace{0.9em}{\color{rule}|}\hspace{0.9em}}
+\newcommand{\subrole}[2]{\vspace{4pt}\textit{#1}\hfill\textit{#2}\par}
+% \entry{Role}{Organisation}{Dates}
+\newcommand{\entry}[3]{\vspace{3pt}\textbf{#1}, #2\hfill\textit{#3}\par}
 
 \begin{document}
 
 % ---------------- Header ----------------
 \begin{center}
-  {\fontsize{26}{28}\selectfont\color{accent}\bfseries Anmol Goyal}\\[4pt]
-  {\sffamily\color{muted} Mathematics with Statistics @ King's College London \textperiodcentered{} Visiting Student AI Researcher @ Oxford Dynamics}\\[6pt]
+  {\fontsize{24}{26}\selectfont\scshape Anmol Goyal}\\[5pt]
   {\small
-  \contact{https://anmol-goyal.com}{\faGlobe}{anmol-goyal.com}\sep
-  \contact{mailto:anmol.goyal@kcl.ac.uk}{\faEnvelope[regular]}{anmol.goyal@kcl.ac.uk}\sep
-  \contact{tel:+447778701965}{\faPhone}{+44 7778 701965}\sep
-  \contact{https://www.linkedin.com/in/anmolxgoyal/}{\faLinkedin}{anmolxgoyal}\sep
-  \contact{https://github.com/AG-droid}{\faGithub}{AG-droid}\sep
-  {\color{accent}\faMapMarker*}\hspace{0.35em}London, UK}
+  \href{https://anmol-goyal.com}{anmol-goyal.com}
+  \enspace\textperiodcentered\enspace \href{mailto:anmol.goyal@kcl.ac.uk}{anmol.goyal@kcl.ac.uk}
+  \enspace\textperiodcentered\enspace +44 7778 701965
+  \enspace\textperiodcentered\enspace \href{https://www.linkedin.com/in/anmolxgoyal/}{linkedin.com/in/anmolxgoyal}
+  \enspace\textperiodcentered\enspace \href{https://github.com/AG-droid}{github.com/AG-droid}}
 \end{center}
-\vspace{-2pt}
-
-{\small Mathematics student and visiting AI researcher with hands-on experience in robotics and physical AI. Currently
-leading a final-year industry research project on \textbf{liquid neural networks} in collaboration with King's College London and Oxford Dynamics.\par}
 
 % ---------------- Education ----------------
 \section{Education}
 \role{King's College London}{London, UK}{BSc (Hons) Mathematics with Statistics}{Sep 2024 -- Jul 2027}
 \begin{itemize}
-  \item \textbf{Final year:} Informatics modules in Natural Language Processing and Computational Modelling, alongside core mathematics and statistics.
-  \item \textbf{Prior modules:} Probability \& Statistics II, Applied Probabilistic Models, Random Structures \& Algorithms, Statistical Modelling, Real Analysis, Discrete Mathematics.
+  \item \textbf{Modules:} Probability \& Statistics II, Applied Probabilistic Models, Random Structures \& Algorithms, Statistical Modelling, Real Analysis, Discrete Mathematics.
 \end{itemize}
-\vspace{2pt}
-\textbf{GD Goenka Public School}, Gurugram, India \textperiodcentered{} \textit{High School Diploma in Science (Computer Science \& Physics)}\hfill{\small\color{muted}Apr 2011 -- Mar 2024}\par
+\vspace{4pt}
+\role{GD Goenka Public School}{Gurugram, India}{High School Diploma in Science (Computer Science \& Physics)}{Apr 2011 -- Mar 2024}
 
 % ---------------- Experience ----------------
 \section{Experience}
-\role{Oxford Dynamics \textnormal{\textit{\color{muted}(defence AI \& robotics)}}}{Harwell Science Campus, Oxfordshire}{Visiting Student AI Researcher}{Sep 2026 -- Present}
+\role{Oxford Dynamics}{Harwell Science Campus, Oxfordshire}{Visiting Student AI Researcher}{Sep 2026 -- Present}
 \begin{itemize}
-  \item Stayed on after the internship to lead research on \textbf{liquid time-constant (LTC) networks as adaptive filters}, run as my KCL final-year project under joint academic and industry supervision.
-  \item Investigating whether the learned, input-dependent time constants of LTC networks correspond to the \textbf{Kalman gain} of an optimal linear filter, connecting continuous-time neural ODEs with classical state estimation; built on open-source datasets so the work remains publishable.
+  \item Leading research on \textbf{liquid time-constant (LTC) networks as adaptive filters}, run as my KCL final-year project in collaboration with Oxford Dynamics.
+  \item Investigating whether the learned, input-dependent time constants of LTC networks correspond to the Kalman gain of an optimal linear filter, connecting continuous-time neural ODEs with classical state estimation.
 \end{itemize}
 \subrole{Robotics Intern}{Jun 2026 -- Sep 2026}
 \begin{itemize}
-  \item Wrote \textbf{ROS\,2 / MoveIt} motion-control scripts for a 6-DoF Universal Robots \textbf{UR7e} collaborative arm; the code runs on the hardware and is merged into the team repository.
-  \item Helped commission the UR7e and built its \textbf{digital twin} in \textbf{NVIDIA Isaac Sim} for simulation-first testing of motion plans.
-  \item Developed ROS\,2 nodes and publisher--subscriber pipelines in containerised \textbf{Docker} environments, working to the team's branching and code-review practices.
-  \item Reviewed the literature on AI foundations and world models to inform the research direction for learned models in autonomous systems, and on classical guidance and control, including null-seeking guidance.
+  \item Joined with no robotics background and learned the mechanics of a 6-DoF robotic arm.
+  \item Picked up ROS\,2 from scratch and built a controller for the arm in \textbf{Python} using \textbf{ROS\,2} and \textbf{MoveIt}.
+  \item Recreated the arm in \textbf{NVIDIA Isaac Sim} while shadowing the company's research on vision-language-action models (VLAs) and vision-language models (VLMs).
 \end{itemize}
-
-% ---------------- Skills ----------------
-\section{Skills}
-{\renewcommand{\arraystretch}{1.12}
-\begin{tabularx}{\linewidth}{@{}>{\bfseries}l@{\hspace{10pt}}X@{}}
-  Programming & Python (7 years, self-taught), SQL, R, JavaScript, Java, LaTeX \\
-  Robotics    & ROS\,2, MoveIt, NVIDIA Isaac Sim, Universal Robots (UR7e) \\
-  Data \& ML  & pandas, matplotlib, BeautifulSoup, statistical modelling (regression, diagnostics, model selection) \\
-  Mathematics & Probability, stochastic processes, state estimation (Kalman filtering), linear algebra \\
-  Tooling     & Git, Docker, Linux, IBM Z \& LinuxONE \\
-  Certifications & IBM Z Xplore: Concepts; IBM Z \& LinuxONE Community Contributor 2025 (Level 1) \\
-  Languages   & English (fluent), Hindi (native), Punjabi (intermediate), Spanish (elementary) \\
-\end{tabularx}}
 
 % ---------------- Leadership ----------------
 \section{Leadership \& Outreach}
-\entry{Co-President, IBM Z Society \& IBM Z Student Ambassador}{, KCL}{Jul 2025 -- Jun 2026}
+\entry{Co-President, IBM Z Society \& IBM Z Student Ambassador}{KCL}{Jul 2025 -- Jun 2026}
 \begin{itemize}
   \item Represented IBM Z on campus: hosted talks with Amazon engineers and an IBM director, ran workshops, and grew a mainframe learning community on IBM's Z Xplore platform.
 \end{itemize}
-\entry{Founder \& President, KCL Financial Literacy Society}{}{Jan 2025 -- May 2026}
+\entry{Founder \& President}{KCL Financial Literacy Society}{Jan 2025 -- May 2026}
 \begin{itemize}
   \item Founded a society teaching students practical personal finance, from budgeting to investing.
 \end{itemize}
-\entry{NMES Faculty Student Representative}{, KCL}{Oct 2025 -- Sep 2026}
+\entry{NMES Faculty Student Representative}{KCL}{Oct 2025 -- Sep 2026}
 \begin{itemize}
-  \item Selected by application to represent NMES students; analysed $\sim$150 survey responses and presented findings to staff.
+  \item Selected to represent NMES students; analysed $\sim$150 survey responses and presented findings to staff.
 \end{itemize}
-\entry{Student Ambassador}{, KCL Mathematics (Subject Ambassador \& Online Events)}{Nov 2025 -- Sep 2026}
+\entry{Student Ambassador (Subject Ambassador \& Online Events)}{KCL Mathematics}{Nov 2025 -- Sep 2026}
 \begin{itemize}
-  \item Presented technical topics to audiences of 20--60 at outreach events and helped run online Q\&As and webinars for applicants.
+  \item Presented to audiences of 20--60 at outreach events and helped run online Q\&As and webinars for applicants.
 \end{itemize}
-\entry{Participant, King's Entrepreneurship Institute Online Incubator}{}{Aug 2025}
-\entry{Volunteer Python Instructor, Code Your Future}{ (taught beginners in groups of 4--6)}{Aug 2024 -- Jan 2025}
+\entry{Participant}{King's Entrepreneurship Institute Online Incubator}{Aug 2025}
+\entry{Volunteer Python Instructor}{Code Your Future}{Aug 2024 -- Jan 2025}
+
+% ---------------- Skills ----------------
+\section{Skills}
+{\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l@{\hspace{12pt}}X@{}}
+  Programming    & Python, SQL, R, JavaScript, Java, LaTeX \\
+  Robotics       & ROS\,2, MoveIt, NVIDIA Isaac Sim \\
+  Data \& ML     & pandas, matplotlib, BeautifulSoup, statistical modelling (regression, diagnostics, model selection) \\
+  Mathematics    & Probability, stochastic processes, state estimation (Kalman filtering), linear algebra \\
+  Tools          & Git, Linux, IBM Z \& LinuxONE \\
+  Certifications & IBM Z Xplore: Concepts; IBM Z \& LinuxONE Community Contributor 2025 (Level 1) \\
+  Languages      & English (fluent), Hindi (native), Punjabi (intermediate), Spanish (elementary) \\
+\end{tabularx}}
 
 \end{document}

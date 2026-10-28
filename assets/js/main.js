@@ -10,7 +10,7 @@ const FS = {
   "oxford-md":   { name: "Oxford Dynamics.md", type: "doc", tpl: "doc-oxford", w: 640, h: 620 },
   "od-photos":   { name: "Photos", type: "folder", glyph: "photos", children: ["img-team", "img-arm", "img-field", "img-sim"] },
   "img-team":    { name: "team-harwell.jpg", type: "image", src: "assets/img/oxford-dynamics/team-harwell.jpg", caption: "The robotics team at Harwell" },
-  "img-arm":     { name: "ur7e-arm.jpg", type: "image", src: "assets/img/oxford-dynamics/robot-arm.jpg", caption: "The 6-DoF UR7e arm", w: 480, h: 620 },
+  "img-arm":     { name: "robot-arm.jpg", type: "image", src: "assets/img/oxford-dynamics/robot-arm.jpg", caption: "The 6-DoF arm I built a controller for", w: 480, h: 620 },
   "img-field":   { name: "field-testing.jpg", type: "image", src: "assets/img/oxford-dynamics/field-robot.jpg", caption: "Field testing" },
   "img-sim":     { name: "isaac-sim.jpg", type: "image", src: "assets/img/oxford-dynamics/isaac-sim.jpg", caption: "NVIDIA Isaac Sim" },
   leadership:    { name: "Leadership", type: "folder", glyph: "leadership", children: ["leadership-md", "lead-photos"] },
@@ -30,7 +30,7 @@ const FS = {
   "p-github":    { name: "GitHub Profile", type: "link", href: "https://github.com/AG-droid" },
 
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
-  "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=3", w: 760, h: 720 },
+  "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=4", w: 760, h: 720 },
 
   contact:       { name: "Contact", type: "folder", glyph: "contact", children: ["contact-md", "c-email", "c-linkedin", "c-github"] },
   "contact-md":  { name: "Contact.md", type: "doc", tpl: "doc-contact", w: 540, h: 320 },
@@ -705,7 +705,7 @@ const BOOT = [
   "[  OK  ] Started maths-with-statistics.service (KCL, final year)",
   "[  OK  ] Started ros2-daemon",
   "[  OK  ] Calibrated 6-DoF arm controller",
-  "[  OK  ] Loaded digital twin from NVIDIA Isaac Sim",
+  "[  OK  ] Loaded arm model in NVIDIA Isaac Sim",
   "[ WAIT ] Integrating liquid neurons (dt = 0.01) ...",
   "[  OK  ] Liquid time constants adapted",
   "[  OK  ] Reached target: Desktop",
