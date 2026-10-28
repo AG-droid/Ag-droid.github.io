@@ -1,322 +1,448 @@
-// Theme toggle (remembers choice)
-(function () {
-  const root = document.documentElement;
-  let saved = null;
-  try { saved = localStorage.getItem("theme"); } catch (e) {}
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  root.dataset.theme = saved || (prefersDark ? "dark" : "light");
+// ===================== File system =====================
+// Everything on the "computer". Docs point at <template> ids in index.html.
+const FS = {
+  home:        { name: "Anmol", type: "folder", children: ["about", "research", "oxford", "experience", "leadership", "projects", "cv", "photos", "terminal", "contact"] },
+  about:       { name: "About Me.txt", type: "doc", tpl: "doc-about", w: 600, h: 560 },
+  research:    { name: "Research", type: "folder", children: ["lnn", "reading"] },
+  lnn:         { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 640, h: 600 },
+  reading:     { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 520, h: 300 },
+  oxford:      { name: "Oxford Dynamics", type: "folder", children: ["internship", "img-team", "img-arm", "img-field", "img-sim"] },
+  internship:  { name: "Internship.md", type: "doc", tpl: "doc-internship", w: 620, h: 580 },
+  "img-team":  { name: "team-harwell.jpg", type: "image", src: "assets/img/oxford-dynamics/team-harwell.jpg", caption: "The robotics team at Harwell" },
+  "img-arm":   { name: "6-dof-arm.jpg", type: "image", src: "assets/img/oxford-dynamics/robot-arm.jpg", caption: "The 6-DoF arm", w: 480, h: 620 },
+  "img-field": { name: "field-testing.jpg", type: "image", src: "assets/img/oxford-dynamics/field-robot.jpg", caption: "Field testing" },
+  "img-sim":   { name: "isaac-sim.jpg", type: "image", src: "assets/img/oxford-dynamics/isaac-sim.jpg", caption: "NVIDIA Isaac Sim" },
+  experience:  { name: "Experience.md", type: "doc", tpl: "doc-experience", w: 660, h: 620 },
+  leadership:  { name: "Leadership", type: "folder", children: ["speakers", "img-amazon", "img-ibm"] },
+  speakers:    { name: "Speaker Series.md", type: "doc", tpl: "doc-speakers", w: 600, h: 500 },
+  "img-amazon":{ name: "amazon-fireside.jpg", type: "image", src: "assets/img/events/amazon-fireside.jpg", caption: "Day 1: hosting the Amazon fireside chat" },
+  "img-ibm":   { name: "ibm-session.jpg", type: "image", src: "assets/img/events/ibm-session.jpg", caption: "Day 2: AI and enterprise computing with IBM" },
+  projects:    { name: "Projects", type: "folder", children: ["p-quantbox", "p-react", "p-invaders", "p-github"] },
+  "p-quantbox":{ name: "QuantBox", type: "link", href: "https://github.com/AG-droid/QuantBox" },
+  "p-react":   { name: "React Experiments", type: "link", href: "https://github.com/AG-droid/React-JS" },
+  "p-invaders":{ name: "Space Invaders", type: "link", href: "https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" },
+  "p-github":  { name: "GitHub Profile", type: "link", href: "https://github.com/AG-droid" },
+  cv:          { name: "CV", type: "folder", children: ["cv-pdf"] },
+  "cv-pdf":    { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf", w: 760, h: 640 },
+  photos:      { name: "Photos", type: "photos", w: 720, h: 520 },
+  terminal:    { name: "Terminal", type: "terminal", w: 640, h: 420 },
+  contact:     { name: "Contact", type: "contact", tpl: "doc-contact", w: 520, h: 300 },
+};
+const DESKTOP = FS.home.children;
+const DOCK = ["home", "research", "oxford", "photos", "terminal", "|", "cv", "contact"];
 
-  document.querySelector(".theme-toggle").addEventListener("click", () => {
-    root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
-    try { localStorage.setItem("theme", root.dataset.theme); } catch (e) {}
-  });
-})();
-
-// Nav border on scroll + active link
-(function () {
-  const nav = document.querySelector(".nav");
-  const links = [...document.querySelectorAll(".nav__links a")];
-  const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
-
-  const onScroll = () => {
-    nav.classList.toggle("is-scrolled", window.scrollY > 10);
-    const y = window.scrollY + window.innerHeight / 3;
-    let current = -1;
-    sections.forEach((s, i) => { if (s && s.offsetTop <= y) current = i; });
-    links.forEach((a, i) => a.classList.toggle("is-active", i === current));
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-})();
-
-// Reveal elements as they enter the viewport
-(function () {
-  const items = document.querySelectorAll(".reveal");
-  if (!("IntersectionObserver" in window)) {
-    items.forEach((el) => el.classList.add("is-visible"));
-    return;
-  }
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); }
-    });
-  }, { threshold: 0.12 });
-  items.forEach((el) => io.observe(el));
-})();
-
-// Hero background: a quiet dot field that drifts toward the cursor
-(function () {
-  const canvas = document.querySelector(".hero__field");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const GAP = 28;
-  let w, h, dpr, dots = [];
-  const mouse = { x: -9999, y: -9999 };
-
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = canvas.offsetWidth; h = canvas.offsetHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dots = [];
-    for (let x = GAP / 2; x < w; x += GAP)
-      for (let y = GAP / 2; y < h; y += GAP) dots.push({ x, y });
-  }
-
-  function draw(t) {
-    ctx.clearRect(0, 0, w, h);
-    const style = getComputedStyle(document.documentElement);
-    const base = style.getPropertyValue("--line").trim();
-    const accent = style.getPropertyValue("--accent").trim();
-    for (const d of dots) {
-      const dx = d.x - mouse.x, dy = d.y - mouse.y;
-      const dist = Math.hypot(dx, dy);
-      const near = Math.max(0, 1 - dist / 160);
-      const wave = reduced ? 0 : Math.sin(d.x * 0.02 + d.y * 0.015 + t * 0.0008) * 0.5 + 0.5;
-      const r = 1 + wave * 0.6 + near * 1.8;
-      ctx.beginPath();
-      ctx.arc(d.x - dx * near * 0.12, d.y - dy * near * 0.12, r, 0, Math.PI * 2);
-      ctx.fillStyle = near > 0.05 ? accent : base;
-      ctx.globalAlpha = near > 0.05 ? 0.35 + near * 0.65 : 1;
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    if (!reduced) requestAnimationFrame(draw);
-  }
-
-  canvas.parentElement.addEventListener("pointermove", (e) => {
-    const r = canvas.getBoundingClientRect();
-    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
-    if (reduced) draw(0);
-  });
-  canvas.parentElement.addEventListener("pointerleave", () => { mouse.x = mouse.y = -9999; });
-  window.addEventListener("resize", resize);
-  resize();
-  requestAnimationFrame(draw);
-})();
-
-const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const $ = (sel, root = document) => root.querySelector(sel);
+const mobile = window.matchMedia("(max-width: 700px)");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function fitCanvas(canvas) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = canvas.offsetWidth, h = canvas.offsetHeight;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { ctx, w, h };
+// ===================== Icons =====================
+// Small symbols drawn on each folder so they're easy to tell apart
+const GLYPHS = {
+  home: '<path d="M23 40l9-7 9 7"/><path d="M26 38v9h12v-9"/>',
+  research: '<path d="M29 31v6l-6 10h18l-6-10v-6M27 31h10"/>',
+  oxford: '<path d="M22 48h14M27 48v-5l6-6 6 4"/><circle cx="33" cy="37" r="1.5"/><path d="M39 41l3-3"/>',
+  leadership: '<rect x="29" y="30" width="6" height="11" rx="3"/><path d="M25 38a7 7 0 0 0 14 0M32 45v3"/>',
+  projects: '<path d="M27 33l-6 6 6 6M37 33l6 6-6 6"/>',
+  cv: '<circle cx="32" cy="35" r="4"/><path d="M24 48a8 7 0 0 1 16 0"/>',
+};
+function iconArt(id) {
+  const item = FS[id];
+  switch (item.type) {
+    case "folder":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 14a4 4 0 0 1 4-4h14l5 5h25a4 4 0 0 1 4 4v4H6z" fill="#2c4be0"/><rect x="6" y="20" width="52" height="36" rx="4" fill="#4d6bff"/><rect x="6" y="20" width="52" height="5" rx="2" fill="#6f88ff"/><g fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[id] || ""}</g></svg>`;
+    case "doc":
+    case "pdf": {
+      const ext = item.name.split(".").pop().toUpperCase();
+      const band = item.type === "pdf" ? "#e5484d" : "#3b5bff";
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 4h26l12 12v42a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff"/><path d="M40 4v10a2 2 0 0 0 2 2h10z" fill="#d8dbe3"/><g stroke="#c4c8d2" stroke-width="2"><path d="M19 24h26M19 30h26M19 36h20"/></g><rect x="16" y="44" width="32" height="11" rx="2" fill="${band}"/><text x="32" y="52.5" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">${ext}</text></svg>`;
+    }
+    case "image":
+      return `<img src="${item.src}" alt="" loading="lazy">`;
+    case "link":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#fff"/><path d="M26 38l14-14M28 24h12v12" fill="none" stroke="#3b5bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    case "terminal":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 24l8 7-8 7" fill="none" stroke="#3fb950" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 39h14" stroke="#c9d1d9" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+    case "photos":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#fff"/><g opacity=".9"><circle cx="24" cy="25" r="8" fill="#f59e0b"/><circle cx="40" cy="25" r="8" fill="#ef4444"/><circle cx="24" cy="39" r="8" fill="#22c55e"/><circle cx="40" cy="39" r="8" fill="#3b5bff"/></g></svg>`;
+    case "contact":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#3b5bff"/><rect x="15" y="21" width="34" height="23" rx="3" fill="none" stroke="#fff" stroke-width="3"/><path d="M16 23l16 12 16-12" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
+  }
+  return "";
 }
 
-// Typeset equations with KaTeX (plain-text fallback stays if the CDN fails)
-(function () {
-  if (!window.katex) return;
-  document.querySelectorAll(".tex, .tex-i").forEach((el) => {
-    try {
-      katex.render(el.dataset.tex, el, { displayMode: el.classList.contains("tex"), throwOnError: false });
-    } catch (e) {}
+function iconButton(id, cls = "icon") {
+  const item = FS[id];
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = cls;
+  b.dataset.open = id;
+  b.innerHTML = `<span class="icon__art">${iconArt(id)}</span><span class="icon__label"></span>`;
+  $(".icon__label", b).textContent = item.name;
+  if (item.type === "link") b.title = item.href;
+  return b;
+}
+
+// ===================== Window manager =====================
+const wins = new Map();
+let zTop = 10;
+let cascade = 0;
+
+const SIZES = { folder: [580, 380], doc: [620, 560], image: [720, 520], photos: [720, 520], terminal: [640, 420], pdf: [760, 640], contact: [520, 300] };
+
+function open(id) {
+  const item = FS[id];
+  if (!item) return;
+  if (item.type === "link") { window.open(item.href, "_blank", "noopener"); return; }
+  if (wins.has(id)) { const w = wins.get(id); w.el.hidden = false; focus(id); return; }
+
+  const el = document.createElement("section");
+  el.className = "win";
+  el.setAttribute("role", "dialog");
+  el.setAttribute("aria-label", item.name);
+  el.innerHTML = `
+    <header class="win__bar">
+      <div class="win__btns">
+        <button class="win__btn win__btn--close" type="button" aria-label="Close"></button>
+        <button class="win__btn win__btn--min" type="button" aria-label="Minimise"></button>
+        <button class="win__btn win__btn--max" type="button" aria-label="Maximise"></button>
+      </div>
+      <div class="win__title">${item.type === "image" ? `<img src="${item.src}" alt="">` : iconArt(id).replace("<img ", '<img loading="eager" ')}<span></span></div>
+    </header>
+    <div class="win__body"></div>`;
+  $(".win__title span", el).textContent = item.name;
+
+  // size + position, cascading so windows don't stack exactly
+  const [dw, dh] = SIZES[item.type] || [600, 480];
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const menubar = 30, dock = 92;
+  const w = Math.min(item.w || dw, vw - 32);
+  const h = Math.min(item.h || dh, vh - menubar - dock - 24);
+  const left = Math.max(16, Math.min(vw - w - 16, (vw - w) / 2 + 60 + cascade * 28));
+  const top = Math.max(menubar + 12, Math.min(vh - dock - h - 8, menubar + 40 + cascade * 28));
+  cascade = (cascade + 1) % 6;
+  Object.assign(el.style, { width: w + "px", height: h + "px", left: left + "px", top: top + "px" });
+
+  $("#windows").append(el);
+  wins.set(id, { el, item });
+  render(id, $(".win__body", el));
+
+  $(".win__btn--close", el).addEventListener("click", () => close(id));
+  $(".win__btn--min", el).addEventListener("click", () => minimise(id));
+  $(".win__btn--max", el).addEventListener("click", () => el.classList.toggle("is-max"));
+  $(".win__bar", el).addEventListener("dblclick", (e) => { if (!e.target.closest(".win__btns")) el.classList.toggle("is-max"); });
+  el.addEventListener("pointerdown", () => focus(id), true);
+  makeDraggable(el);
+  focus(id);
+}
+
+function focus(id) {
+  const w = wins.get(id);
+  if (!w) return;
+  w.el.style.zIndex = ++zTop;
+  wins.forEach((o, key) => o.el.classList.toggle("is-inactive", key !== id));
+  $("#active-title").textContent = w.item.name;
+  if (w.focusInput) w.focusInput();
+  syncDock();
+}
+
+function topmost() {
+  let best = null;
+  wins.forEach((w, key) => { if (!w.el.hidden && (!best || +w.el.style.zIndex > +wins.get(best).el.style.zIndex)) best = key; });
+  return best;
+}
+
+function afterHide() {
+  const next = topmost();
+  if (next) focus(next);
+  else { $("#active-title").textContent = "Desktop"; syncDock(); }
+}
+
+function close(id) {
+  const w = wins.get(id);
+  if (!w) return;
+  w.el.remove();
+  wins.delete(id);
+  afterHide();
+}
+
+function minimise(id) {
+  const w = wins.get(id);
+  if (!w) return;
+  w.el.hidden = true;
+  afterHide();
+}
+
+function makeDraggable(el) {
+  const bar = $(".win__bar", el);
+  let sx, sy, ox, oy, dragging = false;
+  bar.addEventListener("pointerdown", (e) => {
+    if (mobile.matches || e.button !== 0 || e.target.closest(".win__btns") || el.classList.contains("is-max")) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY; ox = el.offsetLeft; oy = el.offsetTop;
+    bar.setPointerCapture(e.pointerId);
   });
-})();
+  bar.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const x = Math.max(80 - el.offsetWidth, Math.min(window.innerWidth - 80, ox + e.clientX - sx));
+    const y = Math.max(30, Math.min(window.innerHeight - 120, oy + e.clientY - sy));
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+  });
+  const stop = () => { dragging = false; };
+  bar.addEventListener("pointerup", stop);
+  bar.addEventListener("pointercancel", stop);
+}
 
-// Hero graphic: a small liquid time-constant circuit, simulated live.
-// Each neuron follows dx/dt = -(1/tau + f) x + f A, with f driven by incoming spikes.
-(function () {
-  const canvas = document.querySelector(".circuit");
-  if (!canvas) return;
-  let ctx, w, h;
-
-  let seed = 7;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-
-  const layout = [[5, 0.22], [4, 0.41], [3, 0.59], [2, 0.75]];
-  const nodes = [];
-  const layers = layout.map(([count, y], li) =>
-    Array.from({ length: count }, (_, i) => {
-      const node = {
-        layer: li, nx: 0.5 + (i - (count - 1) / 2) * (0.6 / Math.max(count - 1, 1)) * (li === 3 ? 0.5 : 1),
-        ny: y, x: rand() * 0.3, input: 0, tau: 0.6 + rand() * 0.8, out: [],
-        phase: rand() * Math.PI * 2, freq: 0.4 + rand() * 0.9,
-      };
-      nodes.push(node);
-      return node;
-    })
-  );
-  const edges = [];
-  const connect = (a, b) => { const e = { a, b, bend: (rand() - 0.5) * 0.12 }; edges.push(e); a.out.push(e); };
-  for (let l = 0; l < layers.length - 1; l++) {
-    layers[l].forEach((a) => {
-      const targets = [...layers[l + 1]].sort(() => rand() - 0.5).slice(0, l === 2 ? 2 : 2);
-      targets.forEach((b) => connect(a, b));
-    });
-  }
-  connect(layers[2][0], layers[2][2]);
-  connect(layers[2][2], layers[2][0]);
-
-  const pulses = [];
-  const history = layers[3].map(() => []);
-  const HIST = 120;
-
-  const pos = (n) => [n.nx * w, n.ny * h];
-  function bezier(e, t) {
-    const [x1, y1] = pos(e.a), [x2, y2] = pos(e.b);
-    const cx = (x1 + x2) / 2 + e.bend * w + (e.a.layer === e.b.layer ? 0 : 0);
-    const cy = (y1 + y2) / 2 + (e.a.layer === e.b.layer ? -0.08 * h : 0);
-    const u = 1 - t;
-    return [u * u * x1 + 2 * u * t * cx + t * t * x2, u * u * y1 + 2 * u * t * cy + t * t * y2, cx, cy];
-  }
-
-  function step(dt, time) {
-    for (const n of nodes) {
-      if (n.layer === 0) n.input = 0.5 + 0.5 * Math.sin(time * n.freq + n.phase);
-      const f = 1 / (1 + Math.exp(-(4 * n.input - 2)));
-      n.x += (-(1 / n.tau + f) * n.x + f) * dt;
-      n.input *= Math.exp(-dt * 2.5);
-      if (n.out.length && rand() < n.x * n.x * dt * 2.2) {
-        pulses.push({ e: n.out[Math.floor(rand() * n.out.length)], t: 0 });
-      }
+// ===================== Window contents =====================
+function render(id, body) {
+  const item = FS[id];
+  switch (item.type) {
+    case "folder": {
+      const grid = document.createElement("div");
+      grid.className = "folder";
+      item.children.forEach((c) => grid.append(iconButton(c)));
+      const status = document.createElement("div");
+      status.className = "folder__status";
+      status.textContent = `${item.children.length} items`;
+      body.append(grid, status);
+      break;
     }
-    for (let i = pulses.length - 1; i >= 0; i--) {
-      const p = pulses[i];
-      p.t += dt * 0.9;
-      if (p.t >= 1) { p.e.b.input += 0.9; pulses.splice(i, 1); }
+    case "doc":
+    case "contact": {
+      const doc = document.createElement("article");
+      doc.className = "doc";
+      doc.append($("#" + item.tpl).content.cloneNode(true));
+      body.append(doc);
+      break;
     }
-    layers[3].forEach((n, i) => { history[i].push(n.x); if (history[i].length > HIST) history[i].shift(); });
-  }
-
-  function draw() {
-    const accent = cssVar("--accent"), muted = cssVar("--muted"), surface = cssVar("--surface");
-    ctx.clearRect(0, 0, w, h);
-
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = muted;
-    ctx.globalAlpha = 0.28;
-    for (const e of edges) {
-      const [x1, y1] = pos(e.a), [x2, y2] = pos(e.b);
-      const [, , cx, cy] = bezier(e, 0);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx, cy, x2, y2); ctx.stroke();
+    case "image": {
+      body.innerHTML = `<figure class="viewer" style="margin:0"><img src="${item.src}" alt=""><p></p></figure>`;
+      $("img", body).alt = item.caption;
+      $("p", body).textContent = item.caption;
+      break;
     }
-
-    ctx.fillStyle = accent;
-    for (const p of pulses) {
-      const [x, y] = bezier(p.e, p.t);
-      ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
-    }
-
-    for (const n of nodes) {
-      const [x, y] = pos(n);
-      const r = n.layer === 3 ? 9 : n.layer === 2 ? 8 : 6.5;
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = surface; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 0.15 + 0.85 * Math.min(n.x, 1);
-      ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = 1; ctx.strokeStyle = accent; ctx.lineWidth = 1.5; ctx.stroke();
-    }
-
-    // motor neuron output traces
-    const top = 0.82 * h, span = 0.1 * h, left = 0.14 * w, width = 0.72 * w;
-    const lo = Math.min(...history.flat()), hi = Math.max(...history.flat());
-    const norm = (v) => (hi - lo < 1e-3 ? 0.5 : (v - lo) / (hi - lo));
-    ctx.globalAlpha = 0.3; ctx.strokeStyle = muted; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(left, top + span); ctx.lineTo(left + width, top + span); ctx.stroke();
-    history.forEach((hist, i) => {
-      ctx.globalAlpha = i === 0 ? 1 : 0.45;
-      ctx.strokeStyle = accent; ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      hist.forEach((v, k) => {
-        const px = left + (k / (HIST - 1)) * width, py = top + span - norm(v) * span;
-        k ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    case "photos": {
+      const grid = document.createElement("div");
+      grid.className = "photos";
+      Object.keys(FS).filter((k) => FS[k].type === "image").forEach((k) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.open = k;
+        b.innerHTML = `<img src="${FS[k].src}" alt="" loading="lazy">`;
+        $("img", b).alt = FS[k].caption;
+        grid.append(b);
       });
-      ctx.stroke();
-    });
-    ctx.globalAlpha = 1;
-  }
-
-  let time = 0, last = 0, visible = true;
-  function frame(now) {
-    const dt = Math.min((now - last) / 1000 || 0, 0.05);
-    last = now;
-    if (visible) { time += dt; step(dt, time); draw(); }
-    requestAnimationFrame(frame);
-  }
-
-  function resize() { ({ ctx, w, h } = fitCanvas(canvas)); if (reducedMotion) draw(); }
-  window.addEventListener("resize", resize);
-  resize();
-  // warm up so the first frame already looks alive
-  for (let i = 0; i < 240; i++) { time += 1 / 60; step(1 / 60, time); }
-
-  if (reducedMotion) {
-    draw();
-    new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  } else {
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
+      body.append(grid);
+      break;
     }
-    requestAnimationFrame(frame);
+    case "pdf": {
+      fetch(item.src, { method: "HEAD" })
+        .then((r) => {
+          if (!r.ok) throw new Error();
+          body.innerHTML = `<iframe class="pdf" src="${item.src}" title="${item.name}"></iframe>`;
+        })
+        .catch(() => {
+          const doc = document.createElement("article");
+          doc.className = "doc";
+          doc.append($("#doc-cv-missing").content.cloneNode(true));
+          body.append(doc);
+        });
+      break;
+    }
+    case "terminal":
+      terminal(id, body);
+      break;
   }
-})();
+}
 
-// Fig. 1: step response of a liquid neuron vs a fixed time-constant neuron
-(function () {
-  const canvas = document.querySelector(".response");
-  if (!canvas) return;
-  const slider = document.getElementById("input-strength");
-  const output = document.querySelector('output[for="input-strength"]');
-  const TAU = 1, T_END = 5, T_STEP = 0.4;
-  let ctx, w, h;
+// ===================== Terminal =====================
+function terminal(id, body) {
+  body.innerHTML = `<div class="term"><pre class="term__out"></pre><div class="term__line"><span class="term__prompt">anmol@kcl:<b>~</b>$</span><input aria-label="Terminal input" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>`;
+  const out = $(".term__out", body), input = $("input", body), term = $(".term", body);
+  const history = [];
+  let hIndex = 0;
 
-  // closed-form solutions for a step input at T_STEP (A = 1), normalised to their steady state
-  const liquid = (t, f) => (t < T_STEP ? 0 : 1 - Math.exp(-(1 / TAU + f) * (t - T_STEP)));
-  const fixed = (t) => (t < T_STEP ? 0 : 1 - Math.exp(-(t - T_STEP) / TAU));
+  const print = (html = "") => { out.insertAdjacentHTML("beforeend", html + "\n"); body.scrollTop = body.scrollHeight; };
+  const echo = (cmd) => {
+    const line = document.createElement("span");
+    line.innerHTML = `<span class="term__prompt">anmol@kcl:<b>~</b>$</span> `;
+    line.append(document.createTextNode(cmd + "\n"));
+    out.append(line);
+  };
+  const find = (q) => {
+    q = q.toLowerCase().replace(/\.(md|txt|pdf|jpg)$/, "").trim();
+    return Object.keys(FS).find((k) => k === q || FS[k].name.toLowerCase().replace(/\.(md|txt|pdf|jpg)$/, "") === q)
+      || Object.keys(FS).find((k) => FS[k].name.toLowerCase().startsWith(q));
+  };
 
-  function draw() {
-    const I = parseFloat(slider.value);
-    const f = 6 * I;
-    output.textContent = I.toFixed(2);
-    const accent = cssVar("--accent"), muted = cssVar("--muted"), line = cssVar("--line"), text = cssVar("--text");
-    const pad = { l: 38, r: 12, t: 14, b: 30 };
-    const pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
-    const X = (t) => pad.l + (t / T_END) * pw, Y = (v) => pad.t + (1 - v) * ph;
-    ctx.clearRect(0, 0, w, h);
-    ctx.font = '500 11px "IBM Plex Mono", monospace';
+  const commands = {
+    help: () => print(
+`<span class="t-accent">Available commands</span>
+  whoami        who is this?
+  ls            list what's on the desktop
+  open &lt;name&gt;   open a file or folder  (e.g. open research)
+  research      my current research
+  experience    roles and skills
+  cv            my CV
+  contact       how to reach me
+  neofetch      system info
+  clear         clear the screen`),
+    whoami: () => print("Anmol Goyal: maths student at King's College London,\nvisiting student AI researcher at Oxford Dynamics."),
+    ls: () => print(DESKTOP.map((k) => (FS[k].type === "folder" ? `<span class="t-accent">${FS[k].name}/</span>` : FS[k].name)).join("   ")),
+    open: (arg) => {
+      if (!arg) return print('<span class="t-err">usage: open &lt;name&gt;</span>');
+      const k = find(arg);
+      if (!k) return print(`<span class="t-err">open: no such file or folder: ${escapeHtml(arg)}</span>`);
+      print(`<span class="t-dim">opening ${escapeHtml(FS[k].name)} ...</span>`);
+      open(k);
+    },
+    research: () => commands.open("lnn"),
+    experience: () => commands.open("experience"),
+    cv: () => commands.open("cv-pdf"),
+    about: () => commands.open("about"),
+    photos: () => commands.open("photos"),
+    contact: () => print('email     <a href="mailto:anmolxgoyal@gmail.com">anmolxgoyal@gmail.com</a>\nlinkedin  <a href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">linkedin.com/in/anmolxgoyal</a>\ngithub    <a href="https://github.com/AG-droid" target="_blank" rel="noopener">github.com/AG-droid</a>'),
+    neofetch: () => print(
+`<span class="t-accent">anmol@kcl</span>
+---------
+<span class="t-accent">OS</span>         AnmolOS 26.10
+<span class="t-accent">Host</span>       King's College London
+<span class="t-accent">Kernel</span>     maths-with-statistics (final year)
+<span class="t-accent">Research</span>   liquid neural networks @ Oxford Dynamics
+<span class="t-accent">Robotics</span>   ROS2 · MoveIt · NVIDIA Isaac Sim
+<span class="t-accent">Languages</span>  English · Hindi · Spanish`),
+    date: () => print(new Date().toString()),
+    echo: (arg) => print(escapeHtml(arg)),
+    clear: () => { out.innerHTML = ""; },
+    sudo: () => print('<span class="t-err">anmol is not in the sudoers file. This incident will be reported.</span>'),
+    ros2: () => print("ros2: the arm controller runs on a real robot in Harwell, not in your browser :)"),
+    exit: () => close(id),
+  };
+  commands.cd = commands.open;
+  commands.cat = commands.open;
 
-    ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.fillStyle = muted;
-    [0, 0.5, 1].forEach((v) => {
-      ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(w - pad.r, Y(v)); ctx.stroke();
-      ctx.textAlign = "right"; ctx.fillText(v.toFixed(1), pad.l - 8, Y(v) + 4);
-    });
-    ctx.textAlign = "center";
-    for (let t = 0; t <= T_END; t++) ctx.fillText(t, X(t), h - 10);
-    ctx.textAlign = "right"; ctx.fillText("t / τ", w - pad.r, Y(0) - 8);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const raw = input.value.trim();
+      input.value = "";
+      echo(raw);
+      if (raw) { history.push(raw); hIndex = history.length; }
+      const [cmd, ...rest] = raw.split(/\s+/);
+      if (!cmd) return;
+      const fn = commands[cmd.toLowerCase()];
+      fn ? fn(rest.join(" ")) : print(`<span class="t-err">command not found: ${escapeHtml(cmd)}</span>. Try <span class="t-accent">help</span>.`);
+      body.scrollTop = body.scrollHeight;
+    } else if (e.key === "ArrowUp" && hIndex > 0) {
+      input.value = history[--hIndex]; e.preventDefault();
+    } else if (e.key === "ArrowDown") {
+      hIndex = Math.min(history.length, hIndex + 1);
+      input.value = history[hIndex] || "";
+    }
+  });
+  term.addEventListener("click", () => { if (!window.getSelection().toString()) input.focus(); });
 
-    const curve = (fn, color, dashed, width) => {
-      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dashed ? [5, 5] : []);
-      ctx.beginPath();
-      for (let i = 0; i <= 200; i++) {
-        const t = (i / 200) * T_END;
-        i ? ctx.lineTo(X(t), Y(fn(t))) : ctx.moveTo(X(t), Y(fn(t)));
-      }
-      ctx.stroke(); ctx.setLineDash([]);
-    };
-    curve(fixed, muted, true, 1.5);
-    curve((t) => liquid(t, f), accent, false, 2.5);
+  print(`Welcome to <span class="t-accent">AnmolOS</span>. Type <span class="t-accent">help</span> to see what you can do.\n`);
+  wins.get(id).focusInput = () => { if (!mobile.matches) input.focus({ preventScroll: true }); };
+}
 
-    // mark the liquid neuron's effective time constant (63% rise)
-    const tSys = TAU / (1 + TAU * f);
-    const mx = X(T_STEP + tSys), my = Y(1 - Math.exp(-1));
-    ctx.fillStyle = accent;
-    ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = text; ctx.textAlign = "left";
-    ctx.fillText("τ_sys = " + tSys.toFixed(2) + "τ", mx + 10, my + 14);
-  }
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
-  function resize() { ({ ctx, w, h } = fitCanvas(canvas)); draw(); }
-  slider.addEventListener("input", draw);
-  window.addEventListener("resize", resize);
-  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  if (document.fonts) document.fonts.ready.then(draw);
-  resize();
-})();
+// ===================== Dock, desktop, clock =====================
+function buildDock() {
+  const dock = $("#dock");
+  DOCK.forEach((id) => {
+    if (id === "|") { const s = document.createElement("span"); s.className = "dock__sep"; dock.append(s); return; }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "dock__item" + (["cv", "oxford"].includes(id) ? " dock__item--extra" : "");
+    b.dataset.open = id;
+    b.dataset.id = id;
+    b.setAttribute("aria-label", FS[id].name);
+    b.innerHTML = iconArt(id) + `<span class="dock__tip"></span>`;
+    $(".dock__tip", b).textContent = id === "home" ? "Home" : FS[id].name;
+    dock.append(b);
+  });
+}
 
-document.getElementById("year").textContent = new Date().getFullYear();
+function syncDock() {
+  document.querySelectorAll(".dock__item").forEach((b) => b.classList.toggle("is-open", wins.has(b.dataset.id)));
+}
+
+function buildDesktop() {
+  const list = $("#desktop-icons");
+  DESKTOP.forEach((id) => {
+    const li = document.createElement("li");
+    li.append(iconButton(id));
+    list.append(li);
+  });
+}
+
+function tickClock() {
+  const now = new Date();
+  $("#clock").textContent = now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+    + "  " + now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+// Anything with data-open (icons, dock, links inside docs) opens that item
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-open]");
+  if (t) open(t.dataset.open);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { const t = topmost(); if (t) close(t); }
+});
+
+// ===================== Boot =====================
+const BOOT = [
+  "AnmolOS 26.10 tty1",
+  "",
+  "[  OK  ] Mounted /home/anmol",
+  "[  OK  ] Started maths-with-statistics.service (KCL, final year)",
+  "[  OK  ] Started ros2-daemon",
+  "[  OK  ] Calibrated 6-DoF arm controller",
+  "[  OK  ] Loaded digital twin from NVIDIA Isaac Sim",
+  "[ WAIT ] Integrating liquid neurons (dt = 0.01) ...",
+  "[  OK  ] Liquid time constants adapted",
+  "[  OK  ] Reached target: Desktop",
+];
+
+function boot(done) {
+  let seen = false;
+  try { seen = sessionStorage.getItem("booted") === "1"; } catch (e) {}
+  if (seen || reducedMotion) return done();
+
+  const screen = $("#boot"), log = $("#boot-log");
+  screen.hidden = false;
+  let i = 0, finished = false, timer;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    try { sessionStorage.setItem("booted", "1"); } catch (e) {}
+    screen.classList.add("is-done");
+    setTimeout(() => { screen.hidden = true; }, 400);
+    document.removeEventListener("keydown", finish);
+    done();
+  };
+  const step = () => {
+    if (i >= BOOT.length) { timer = setTimeout(finish, 500); return; }
+    const line = escapeHtml(BOOT[i++])
+      .replace("[  OK  ]", '[  <span class="ok">OK</span>  ]')
+      .replace("[ WAIT ]", '[ <span class="wait">WAIT</span> ]');
+    log.insertAdjacentHTML("beforeend", line + "\n");
+    timer = setTimeout(step, BOOT[i - 1].includes("WAIT") ? 380 : 110);
+  };
+  screen.addEventListener("click", finish);
+  document.addEventListener("keydown", finish);
+  step();
+}
+
+// ===================== Start =====================
+buildDesktop();
+buildDock();
+tickClock();
+setInterval(tickClock, 15000);
+boot(() => { if (!mobile.matches) open("about"); });
