@@ -479,7 +479,7 @@ const FORM_ENDPOINT = `https://formsubmit.co/ajax/${EMAIL}`;
 function compose(body) {
   body.innerHTML = `
     <form class="compose" novalidate>
-      <div class="compose__row"><span>To</span><input value="Anmol Goyal" readonly tabindex="-1"></div>
+      <div class="compose__row"><span>To</span><input class="compose__to" value="${EMAIL}" readonly aria-label="Recipient"><button type="button" class="compose__copy">Copy</button></div>
       <label class="compose__row"><span>From</span><input name="email" type="email" placeholder="your@email.com" autocomplete="email" required></label>
       <label class="compose__row"><span>Subject</span><input name="subject" placeholder="Hello from your website" maxlength="150"></label>
       <textarea name="message" placeholder="Write your message..." required maxlength="5000"></textarea>
@@ -493,6 +493,14 @@ function compose(body) {
   const status = $(".compose__status", body);
   const send = $('[type="submit"]', body);
   const setStatus = (msg, kind = "") => { status.textContent = msg; status.dataset.kind = kind; };
+
+  // Copy the address, with a fallback for browsers without the Clipboard API
+  const copyBtn = $(".compose__copy", body), to = $(".compose__to", body);
+  copyBtn.addEventListener("click", () => {
+    const done = () => { copyBtn.textContent = "Copied ✓"; setTimeout(() => (copyBtn.textContent = "Copy"), 2000); };
+    const fallback = () => { to.select(); try { document.execCommand("copy"); done(); } catch (e) {} };
+    navigator.clipboard ? navigator.clipboard.writeText(EMAIL).then(done, fallback) : fallback();
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
