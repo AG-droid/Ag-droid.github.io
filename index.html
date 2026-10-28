@@ -8,13 +8,13 @@
   <meta property="og:title" content="Anmol Goyal">
   <meta property="og:description" content="Maths student at King's College London. Visiting Student AI Researcher at Oxford Dynamics.">
   <meta property="og:image" content="https://anmol-goyal.com/assets/img/oxford-dynamics/team-harwell.jpg">
-  <meta name="theme-color" content="#0b1020">
+  <meta name="theme-color" content="#1e1e1e">
   <link rel="icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=5">
-  <script defer src="assets/js/main.js?v=5"></script>
+  <link rel="stylesheet" href="assets/css/style.css?v=6">
+  <script defer src="assets/js/main.js?v=6"></script>
 </head>
 <body>
   <!-- Boot screen (shown once per visit) -->
@@ -52,8 +52,8 @@
   <noscript>
     <div class="noscript">
       <h1>Anmol Goyal</h1>
-      <p>Mathematics with Statistics at King's College London. Visiting Student AI Researcher at Oxford Dynamics, researching Liquid Neural Networks. Previously Robotics Intern at Oxford Dynamics (ROS2, MoveIt, NVIDIA Isaac Sim).</p>
-      <p><a href="mailto:anmolxgoyal@gmail.com">anmolxgoyal@gmail.com</a> · <a href="https://www.linkedin.com/in/anmolxgoyal/">LinkedIn</a> · <a href="https://github.com/AG-droid">GitHub</a></p>
+      <p>Mathematics with Statistics at King's College London. Visiting Student AI Researcher at Oxford Dynamics, researching liquid time-constant networks as adaptive filters. Previously Robotics Intern at Oxford Dynamics (ROS2, MoveIt, NVIDIA Isaac Sim).</p>
+      <p><a href="mailto:anmol.goyal@kcl.ac.uk">anmol.goyal@kcl.ac.uk</a> · <a href="https://www.linkedin.com/in/anmolxgoyal/">LinkedIn</a> · <a href="https://github.com/AG-droid">GitHub</a></p>
     </div>
   </noscript>
 
@@ -62,32 +62,35 @@
   <template id="doc-about">
     <h1>Hi, I'm Anmol.</h1>
     <p class="lead">Final-year Mathematics with Statistics student at King's College London, and a Visiting Student AI Researcher at Oxford Dynamics.</p>
-    <p>This summer I spent 12 weeks at Oxford Dynamics as a Robotics Intern. I came in with no robotics background, learned the mechanics of a 6-DoF arm, picked up ROS2 from scratch and built a controller for it, then recreated the arm in NVIDIA Isaac Sim.</p>
-    <p>Now I'm researching <strong>Liquid Neural Networks</strong> for my final-year project, in collaboration with KCL and Oxford Dynamics.</p>
-    <p>Outside research I've led the IBM Z KCL Society, founded the KCL Financial Literacy Society, and represented students across my faculty.</p>
+    <p>This summer I was a Robotics Intern at Oxford Dynamics. I came in with no robotics background, wrote ROS 2 / MoveIt motion-control code for a 6-DoF Universal Robots arm that now runs on the hardware, and built a digital twin of it in NVIDIA Isaac Sim.</p>
+    <p>Now I'm researching <strong>liquid time-constant networks as adaptive filters</strong> for my final-year project, jointly with KCL and Oxford Dynamics.</p>
+    <p>Outside research I co-lead the IBM Z Society at KCL, represent students across my faculty, and have taught Python to beginners.</p>
     <dl class="facts">
       <dt>Based in</dt><dd>London, UK</dd>
       <dt>Studying</dt><dd>BSc Mathematics with Statistics, KCL (2024–27)</dd>
       <dt>Now</dt><dd>Visiting Student AI Researcher, Oxford Dynamics</dd>
-      <dt>Speaks</dt><dd>English, Hindi, Spanish (elementary)</dd>
+      <dt>Speaks</dt><dd>English, Hindi, Punjabi</dd>
     </dl>
     <p class="hint">Tip: open the folders on the desktop, or launch <button class="inline-link" type="button" data-open="terminal">Terminal</button> and type <code>help</code>.</p>
   </template>
 
   <template id="doc-research">
     <p class="kicker">Final-year project · KCL × Oxford Dynamics · 2026–27</p>
-    <h1>Liquid Neural Networks</h1>
-    <p class="lead">Neural networks that keep adapting how fast they react, built for robots acting in the real world.</p>
-    <h2>What they are</h2>
-    <p>Most neural networks process the world in fixed time steps. Liquid neural networks are continuous-time models: every neuron is a small differential equation, and its time constant changes depending on the input it receives. A strong signal makes a neuron react quickly; a quiet one lets it integrate slowly.</p>
-    <h2>Why they matter for robotics</h2>
+    <h1>Liquid Neural Networks as adaptive filters</h1>
+    <p class="lead">Do liquid networks learn to behave like a Kalman filter?</p>
+    <h2>Liquid time-constant networks</h2>
+    <p>Most neural networks process the world in fixed time steps. Liquid time-constant (LTC) networks are continuous-time models: every neuron is a small differential equation, and its time constant changes with the input it receives. A strong signal makes a neuron react quickly; a quiet one lets it integrate slowly.</p>
+    <h2>The question</h2>
+    <p>A Kalman filter is the classical, optimal way to estimate the state of a system from noisy measurements. Its key quantity, the Kalman gain, decides how much to trust each new measurement against the current estimate.</p>
+    <p>An LTC neuron's input-dependent time constant plays a strikingly similar role: it decides how fast the neuron's state moves toward new input. My project investigates whether the time constants an LTC network learns actually correspond to the Kalman gain of an optimal linear filter, connecting continuous-time neural ODEs with classical state estimation.</p>
+    <h2>Why it matters</h2>
     <ul>
-      <li><strong>Continuous time.</strong> Real sensors stream data at irregular rates. A continuous-time model handles that naturally.</li>
-      <li><strong>Compact.</strong> Richer dynamics per neuron means far fewer neurons than comparable deep models. In one well-known result, a circuit with 19 control neurons kept a car in its lane.</li>
-      <li><strong>Interpretable.</strong> Small, sparse networks can actually be inspected, which matters when a robot is making decisions.</li>
+      <li><strong>Interpretability.</strong> If learned time constants line up with Kalman gains, we can read what a network is doing in the language of control theory.</li>
+      <li><strong>Robotics.</strong> State estimation sits at the heart of every autonomous system, from robot arms to vehicles.</li>
+      <li><strong>Open.</strong> The work is built on open-source datasets so it can be published.</li>
     </ul>
-    <h2>The project</h2>
-    <p>I'm running this as an industry research project with Oxford Dynamics' research division, supervised by Dr. Shireen Kudukkil Manchingal.</p>
+    <h2>Setup</h2>
+    <p>Run as my KCL final-year project under joint academic and industry supervision, with Oxford Dynamics' research division.</p>
     <p class="note">In progress. Notes and results will be added to this folder as the project develops.</p>
   </template>
 
@@ -96,70 +99,82 @@
     <ul class="links">
       <li><a href="https://arxiv.org/abs/2006.04439" target="_blank" rel="noopener">Hasani et al. — Liquid Time-constant Networks (AAAI 2021)</a></li>
       <li><a href="https://www.nature.com/articles/s42256-020-00237-3" target="_blank" rel="noopener">Lechner et al. — Neural circuit policies enabling auditable autonomy (Nature Machine Intelligence, 2020)</a></li>
+      <li><a href="https://doi.org/10.1115/1.3662552" target="_blank" rel="noopener">Kalman — A New Approach to Linear Filtering and Prediction Problems (1960)</a></li>
     </ul>
-  </template>
-
-  <template id="doc-internship">
-    <p class="kicker">Jun – Sep 2026 · Harwell Science and Innovation Campus</p>
-    <h1>Robotics Intern, Oxford Dynamics</h1>
-    <p class="lead">12 weeks, from maths student with no robotics background to shipping code for a real robot arm.</p>
-    <ol class="steps">
-      <li><strong>Arm mechanics.</strong> Learned the kinematics and mechanics of a 6-DoF robotic arm from the ground up.</li>
-      <li><strong>ROS2 controller.</strong> Picked up ROS2 and MoveIt from scratch and built a controller for the arm.</li>
-      <li><strong>Digital twin.</strong> Recreated the arm in NVIDIA Isaac Sim.</li>
-      <li><strong>Research exposure.</strong> Saw the company's research on VLAs and VLMs, which led to my current research role.</li>
-    </ol>
-    <blockquote>"The part I didn't expect to matter so much: the gap between code you write alone for a university project and code that ships in a real codebase."</blockquote>
-    <p class="hint">Photos from the internship are in this folder.</p>
   </template>
 
   <template id="doc-experience">
     <h1>Experience</h1>
+    <p class="lead">Open the <button class="inline-link" type="button" data-open="oxford">Oxford Dynamics</button> and <button class="inline-link" type="button" data-open="leadership">Leadership</button> folders for the full story and photos.</p>
     <ul class="timeline">
-      <li><span>Sep 2026 – now</span><div><strong>Visiting Student AI Researcher</strong><em>Oxford Dynamics</em>Final-year research project on Liquid Neural Networks with KCL.</div></li>
-      <li><span>Jun – Sep 2026</span><div><strong>Robotics Software Engineering Intern</strong><em>Oxford Dynamics</em>ROS2 and MoveIt control for a 6-DoF arm; digital twin in NVIDIA Isaac Sim.</div></li>
-      <li><span>Jul 2025 – Jun 2026</span><div><strong>IBM Z Student Ambassador &amp; President, IBM Z KCL Society</strong><em>IBM · King's College London</em>Ran workshops and watch parties, grew a mainframe club, hosted a speaker series with Amazon and IBM.</div></li>
+      <li><span>Sep 2026 – now</span><div><strong>Visiting Student AI Researcher</strong><em>Oxford Dynamics</em>Leading research on LTC networks as adaptive filters, as my KCL final-year project.</div></li>
+      <li><span>Jun – Sep 2026</span><div><strong>Robotics Intern</strong><em>Oxford Dynamics</em>ROS 2 / MoveIt motion control for a UR7e arm, merged into the team repo; digital twin in NVIDIA Isaac Sim.</div></li>
+      <li><span>Jun 2025 – now</span><div><strong>Co-President, IBM Z Society &amp; IBM Z Student Ambassador</strong><em>King's College London</em>Hosted campus talks with Amazon engineers and an IBM director.</div></li>
+      <li><span>Oct 2025 – now</span><div><strong>NMES Faculty Student Representative</strong><em>King's College London</em>Analysed ~150 survey responses and presented findings to academic staff.</div></li>
+      <li><span>Nov 2025 – now</span><div><strong>Subject Ambassador, Mathematics</strong><em>King's College London</em>Explained technical topics to audiences of 20–60 at outreach events.</div></li>
       <li><span>Jan 2025 – May 2026</span><div><strong>Founder &amp; President</strong><em>KCL Financial Literacy Society</em>Taught students practical finance, from budgeting to investing.</div></li>
-      <li><span>Nov 2025 – Sep 2026</span><div><strong>Student Ambassador</strong><em>King's College London</em>Subject Ambassador for Mathematics with Statistics; online recruitment events.</div></li>
-      <li><span>Oct 2025 – Sep 2026</span><div><strong>NMES Student Representative</strong><em>King's College London</em>Turned survey data into recommendations for faculty.</div></li>
-      <li><span>Aug 2025</span><div><strong>Online Incubator Participant</strong><em>King's Entrepreneurship Institute</em>Developed and validated a startup concept.</div></li>
-      <li><span>Aug 2024 – Jan 2025</span><div><strong>Tech Volunteer</strong><em>CodeYourFuture</em></div></li>
+      <li><span>Aug 2024 – Jan 2025</span><div><strong>Volunteer Python Instructor</strong><em>CodeYourFuture</em>Taught beginners in groups of 4–6.</div></li>
     </ul>
     <h2>Skills</h2>
-    <p class="tags"><span>ROS2</span><span>MoveIt</span><span>NVIDIA Isaac Sim</span><span>Python</span><span>Statistics</span><span>pandas</span><span>Java</span><span>JavaScript</span><span>React</span><span>Git</span><span>Linux</span><span>IBM Z</span><span>LinuxONE</span></p>
-    <h2>Certifications</h2>
-    <p>IBM Z Xplore — Concepts · IBM Z &amp; LinuxONE Community Contributor 2025 (Level 1)</p>
+    <p class="tags"><span>Python</span><span>SQL</span><span>R</span><span>JavaScript</span><span>Java</span><span>LaTeX</span><span>ROS 2</span><span>MoveIt</span><span>NVIDIA Isaac Sim</span><span>Universal Robots UR7e</span><span>Git</span><span>Docker</span><span>Linux</span><span>pandas</span><span>matplotlib</span><span>Statistical modelling</span><span>Kalman filtering</span><span>Stochastic processes</span></p>
     <h2>Education</h2>
-    <p><strong>King's College London</strong> — BSc Mathematics with Statistics, 2024–2027<br><strong>GD Goenka Public School, Gurugram</strong> — Science (Computer Science &amp; Physics), 2011–2024</p>
+    <p><strong>King's College London</strong> — BSc (Hons) Mathematics with Statistics, 2024–2027<br><span class="muted">Final year includes Natural Language Processing and Computational Modelling.</span></p>
+    <h2>Certifications</h2>
+    <p>IBM Z Xplore Concepts · IBM Z &amp; LinuxONE Community Contributor</p>
   </template>
 
-  <template id="doc-speakers">
-    <p class="kicker">Feb 2026 · Strand Campus, KCL</p>
-    <h1>Industry speaker series with Amazon &amp; IBM</h1>
-    <p class="lead">Two days on how AI is actually built and deployed in production, beyond the hype.</p>
-    <p>As President of the IBM Z KCL Society, I spent months planning this series with the KCL AI Society and KCL Quant Society.</p>
+  <template id="doc-oxford">
+    <p class="kicker">Harwell Science Campus, Oxfordshire · defence AI &amp; robotics</p>
+    <h1>Oxford Dynamics</h1>
+    <h2>Visiting Student AI Researcher · Sep 2026 – now</h2>
+    <p>I stayed on after my internship to lead research on liquid time-constant networks as adaptive filters, run as my KCL final-year project. See the <button class="inline-link" type="button" data-open="research">Research</button> folder.</p>
+    <h2>Robotics Intern · Jun – Sep 2026</h2>
     <ul>
-      <li><strong>Day 1, Amazon:</strong> applied generative AI, and what AWS weighs up before deploying it. I hosted the fireside chat.</li>
-      <li><strong>Day 2, IBM:</strong> AI and enterprise computing on mission-critical mainframe systems.</li>
+      <li>Wrote ROS 2 / MoveIt motion-control scripts for a 6-DoF Universal Robots UR7e collaborative arm. The code runs on the hardware and is merged into the team repository.</li>
+      <li>Helped commission the UR7e and built a digital twin of the arm in NVIDIA Isaac Sim, for simulation-first testing of motion plans.</li>
+      <li>Developed ROS 2 nodes and publisher–subscriber pipelines in containerised Docker environments, following the team's branching and code-review practices.</li>
+      <li>Reviewed the literature on AI foundations and world models to inform the company's research direction, and on classical guidance and control.</li>
     </ul>
-    <p class="hint">Photos from both days are in this folder.</p>
+    <blockquote>"The part I didn't expect to matter so much: the gap between code you write alone for a university project and code that ships in a real codebase."</blockquote>
+    <p class="hint">Photos from Harwell are in the <button class="inline-link" type="button" data-open="od-photos">Photos</button> folder.</p>
+  </template>
+
+  <template id="doc-leadership">
+    <h1>Leadership</h1>
+    <h2>Co-President, IBM Z Society · Jun 2025 – now</h2>
+    <p>As Co-President and IBM Z Student Ambassador, I represent IBM Z and mainframe technology on campus: workshops, watch parties and a growing community of learners.</p>
+    <p>In February 2026 we ran a two-day industry speaker series with the KCL AI Society and KCL Quant Society. Day 1 brought Amazon engineers on applied generative AI, and I hosted the fireside chat. Day 2 brought an IBM director on AI and enterprise computing.</p>
+    <h2>Representing students</h2>
+    <ul>
+      <li><strong>NMES Faculty Student Representative.</strong> Analysed ~150 survey responses and presented findings to academic staff.</li>
+      <li><strong>Subject Ambassador, Mathematics.</strong> Explained technical topics to audiences of 20–60 at outreach events.</li>
+    </ul>
+    <h2>Teaching &amp; founding</h2>
+    <ul>
+      <li><strong>Founder &amp; President, KCL Financial Literacy Society.</strong> Practical finance for students, from budgeting to investing.</li>
+      <li><strong>Volunteer Python Instructor, CodeYourFuture.</strong> Taught beginners in groups of 4–6.</li>
+    </ul>
+    <p class="hint">Photos from the speaker series are in the <button class="inline-link" type="button" data-open="lead-photos">Photos</button> folder.</p>
   </template>
 
   <template id="doc-contact">
     <h1>Say hello</h1>
     <p class="lead">Always happy to connect and learn from more people.</p>
     <div class="contact">
-      <a class="btn btn--primary" href="mailto:anmolxgoyal@gmail.com">anmolxgoyal@gmail.com</a>
+      <button class="btn btn--primary" type="button" data-email="anmol.goyal@kcl.ac.uk">anmol.goyal@kcl.ac.uk</button>
       <a class="btn" href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">LinkedIn ↗</a>
       <a class="btn" href="https://github.com/AG-droid" target="_blank" rel="noopener">GitHub ↗</a>
     </div>
+    <p class="hint">Clicking the email copies it and opens your mail app.</p>
   </template>
 
   <template id="doc-cv-missing">
     <h1>CV</h1>
-    <p class="lead">My CV is on its way to this folder.</p>
-    <p>In the meantime, you can request it by email.</p>
-    <div class="contact"><a class="btn btn--primary" href="mailto:anmolxgoyal@gmail.com?subject=CV%20request">Request my CV</a></div>
+    <p class="lead">Couldn't load the CV here.</p>
+    <p><a href="assets/cv/Anmol_Goyal_CV.pdf" target="_blank" rel="noopener">Open it in a new tab</a>, or request it by email.</p>
+    <div class="contact"><button class="btn btn--primary" type="button" data-email="anmol.goyal@kcl.ac.uk">anmol.goyal@kcl.ac.uk</button></div>
   </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

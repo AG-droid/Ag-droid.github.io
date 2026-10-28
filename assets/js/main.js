@@ -1,35 +1,54 @@
 // ===================== File system =====================
 // Everything on the "computer". Docs point at <template> ids in index.html.
 const FS = {
-  home:        { name: "Anmol", type: "folder", children: ["about", "research", "oxford", "experience", "leadership", "projects", "cv", "photos", "terminal", "contact"] },
-  about:       { name: "About Me.txt", type: "doc", tpl: "doc-about", w: 600, h: 560 },
-  research:    { name: "Research", type: "folder", children: ["lnn", "reading"] },
-  lnn:         { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 640, h: 600 },
-  reading:     { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 520, h: 300 },
-  oxford:      { name: "Oxford Dynamics", type: "folder", children: ["internship", "img-team", "img-arm", "img-field", "img-sim"] },
-  internship:  { name: "Internship.md", type: "doc", tpl: "doc-internship", w: 620, h: 580 },
-  "img-team":  { name: "team-harwell.jpg", type: "image", src: "assets/img/oxford-dynamics/team-harwell.jpg", caption: "The robotics team at Harwell" },
-  "img-arm":   { name: "6-dof-arm.jpg", type: "image", src: "assets/img/oxford-dynamics/robot-arm.jpg", caption: "The 6-DoF arm", w: 480, h: 620 },
-  "img-field": { name: "field-testing.jpg", type: "image", src: "assets/img/oxford-dynamics/field-robot.jpg", caption: "Field testing" },
-  "img-sim":   { name: "isaac-sim.jpg", type: "image", src: "assets/img/oxford-dynamics/isaac-sim.jpg", caption: "NVIDIA Isaac Sim" },
-  experience:  { name: "Experience.md", type: "doc", tpl: "doc-experience", w: 660, h: 620 },
-  leadership:  { name: "Leadership", type: "folder", children: ["speakers", "img-amazon", "img-ibm"] },
-  speakers:    { name: "Speaker Series.md", type: "doc", tpl: "doc-speakers", w: 600, h: 500 },
-  "img-amazon":{ name: "amazon-fireside.jpg", type: "image", src: "assets/img/events/amazon-fireside.jpg", caption: "Day 1: hosting the Amazon fireside chat" },
-  "img-ibm":   { name: "ibm-session.jpg", type: "image", src: "assets/img/events/ibm-session.jpg", caption: "Day 2: AI and enterprise computing with IBM" },
-  projects:    { name: "Projects", type: "folder", children: ["p-quantbox", "p-react", "p-invaders", "p-github"] },
-  "p-quantbox":{ name: "QuantBox", type: "link", href: "https://github.com/AG-droid/QuantBox" },
-  "p-react":   { name: "React Experiments", type: "link", href: "https://github.com/AG-droid/React-JS" },
-  "p-invaders":{ name: "Space Invaders", type: "link", href: "https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" },
-  "p-github":  { name: "GitHub Profile", type: "link", href: "https://github.com/AG-droid" },
-  cv:          { name: "CV", type: "folder", children: ["cv-pdf"] },
-  "cv-pdf":    { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf", w: 760, h: 640 },
-  photos:      { name: "Photos", type: "photos", w: 720, h: 520 },
-  terminal:    { name: "Terminal", type: "terminal", w: 640, h: 420 },
-  contact:     { name: "Contact", type: "contact", tpl: "doc-contact", w: 520, h: 300 },
+  home:          { name: "Anmol", type: "folder", glyph: "home", children: ["about", "experience", "research", "projects", "cv", "contact", "terminal"] },
+  about:         { name: "About Me.txt", type: "doc", tpl: "doc-about", w: 600, h: 560 },
+
+  experience:    { name: "Experience", type: "folder", glyph: "experience", children: ["experience-md", "oxford", "leadership"] },
+  "experience-md": { name: "Experience.md", type: "doc", tpl: "doc-experience", w: 680, h: 640 },
+  oxford:        { name: "Oxford Dynamics", type: "folder", glyph: "oxford", children: ["oxford-md", "od-photos"] },
+  "oxford-md":   { name: "Oxford Dynamics.md", type: "doc", tpl: "doc-oxford", w: 640, h: 620 },
+  "od-photos":   { name: "Photos", type: "folder", glyph: "photos", children: ["img-team", "img-arm", "img-field", "img-sim"] },
+  "img-team":    { name: "team-harwell.jpg", type: "image", src: "assets/img/oxford-dynamics/team-harwell.jpg", caption: "The robotics team at Harwell" },
+  "img-arm":     { name: "ur7e-arm.jpg", type: "image", src: "assets/img/oxford-dynamics/robot-arm.jpg", caption: "The 6-DoF UR7e arm", w: 480, h: 620 },
+  "img-field":   { name: "field-testing.jpg", type: "image", src: "assets/img/oxford-dynamics/field-robot.jpg", caption: "Field testing" },
+  "img-sim":     { name: "isaac-sim.jpg", type: "image", src: "assets/img/oxford-dynamics/isaac-sim.jpg", caption: "NVIDIA Isaac Sim" },
+  leadership:    { name: "Leadership", type: "folder", glyph: "leadership", children: ["leadership-md", "lead-photos"] },
+  "leadership-md": { name: "Leadership.md", type: "doc", tpl: "doc-leadership", w: 640, h: 600 },
+  "lead-photos": { name: "Photos", type: "folder", glyph: "photos", children: ["img-amazon", "img-ibm"] },
+  "img-amazon":  { name: "amazon-fireside.jpg", type: "image", src: "assets/img/events/amazon-fireside.jpg", caption: "Day 1: hosting the Amazon fireside chat" },
+  "img-ibm":     { name: "ibm-session.jpg", type: "image", src: "assets/img/events/ibm-session.jpg", caption: "Day 2: AI and enterprise computing with IBM" },
+
+  research:      { name: "Research", type: "folder", glyph: "research", children: ["lnn", "reading"] },
+  lnn:           { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 660, h: 640 },
+  reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
+
+  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["p-quantbox", "p-react", "p-invaders", "p-github"] },
+  "p-quantbox":  { name: "QuantBox", type: "link", href: "https://github.com/AG-droid/QuantBox" },
+  "p-react":     { name: "React Experiments", type: "link", href: "https://github.com/AG-droid/React-JS" },
+  "p-invaders":  { name: "Space Invaders", type: "link", href: "https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" },
+  "p-github":    { name: "GitHub Profile", type: "link", href: "https://github.com/AG-droid" },
+
+  cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
+  "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf", w: 760, h: 720 },
+
+  contact:       { name: "Contact", type: "folder", glyph: "contact", children: ["contact-md", "c-email", "c-linkedin", "c-github"] },
+  "contact-md":  { name: "Contact.md", type: "doc", tpl: "doc-contact", w: 540, h: 320 },
+  "c-email":     { name: "Email", type: "email", email: "anmol.goyal@kcl.ac.uk" },
+  "c-linkedin":  { name: "LinkedIn", type: "link", href: "https://www.linkedin.com/in/anmolxgoyal/" },
+  "c-github":    { name: "GitHub", type: "link", href: "https://github.com/AG-droid" },
+
+  photos:        { name: "Photos", type: "photos", w: 720, h: 520 },
+  terminal:      { name: "Terminal", type: "terminal", w: 640, h: 420 },
 };
 const DESKTOP = FS.home.children;
-const DOCK = ["home", "research", "oxford", "photos", "terminal", "|", "cv", "contact"];
+const DOCK = ["home", "experience", "research", "photos", "terminal", "|", "cv", "contact"];
+const EMAIL = "anmol.goyal@kcl.ac.uk";
+
+// Parent links, so windows can show where they are ("Experience / Oxford Dynamics")
+const PARENT = {};
+Object.keys(FS).forEach((k) => (FS[k].children || []).forEach((c) => { if (k !== "home") PARENT[c] = k; }));
+const pathOf = (id) => (PARENT[id] ? pathOf(PARENT[id]) + " / " : "") + FS[id].name;
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const mobile = window.matchMedia("(max-width: 700px)");
@@ -39,6 +58,9 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matc
 // Small symbols drawn on each folder so they're easy to tell apart
 const GLYPHS = {
   home: '<path d="M23 40l9-7 9 7"/><path d="M26 38v9h12v-9"/>',
+  experience: '<rect x="22" y="33" width="20" height="14" rx="2"/><path d="M28 33v-3h8v3M22 39h20"/>',
+  contact: '<rect x="22" y="32" width="20" height="14" rx="2"/><path d="M23 33l9 7 9-7"/>',
+  photos: '<rect x="22" y="31" width="20" height="16" rx="2"/><path d="M23 45l6-6 4 4 3-3 5 5"/><circle cx="37" cy="35.5" r="1.5"/>',
   research: '<path d="M29 31v6l-6 10h18l-6-10v-6M27 31h10"/>',
   oxford: '<path d="M22 48h14M27 48v-5l6-6 6 4"/><circle cx="33" cy="37" r="1.5"/><path d="M39 41l3-3"/>',
   leadership: '<rect x="29" y="30" width="6" height="11" rx="3"/><path d="M25 38a7 7 0 0 0 14 0M32 45v3"/>',
@@ -49,7 +71,7 @@ function iconArt(id) {
   const item = FS[id];
   switch (item.type) {
     case "folder":
-      return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 14a4 4 0 0 1 4-4h14l5 5h25a4 4 0 0 1 4 4v4H6z" fill="#2c4be0"/><rect x="6" y="20" width="52" height="36" rx="4" fill="#4d6bff"/><rect x="6" y="20" width="52" height="5" rx="2" fill="#6f88ff"/><g fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[id] || ""}</g></svg>`;
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 14a4 4 0 0 1 4-4h14l5 5h25a4 4 0 0 1 4 4v4H6z" fill="#2c4be0"/><rect x="6" y="20" width="52" height="36" rx="4" fill="#4d6bff"/><rect x="6" y="20" width="52" height="5" rx="2" fill="#6f88ff"/><g fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[item.glyph] || ""}</g></svg>`;
     case "doc":
     case "pdf": {
       const ext = item.name.split(".").pop().toUpperCase();
@@ -58,27 +80,37 @@ function iconArt(id) {
     }
     case "image":
       return `<img src="${item.src}" alt="" loading="lazy">`;
+    case "email":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#3b5bff"/><rect x="17" y="22" width="30" height="21" rx="3" fill="none" stroke="#fff" stroke-width="3"/><path d="M18 24l14 10 14-10" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
     case "link":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#fff"/><path d="M26 38l14-14M28 24h12v12" fill="none" stroke="#3b5bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     case "terminal":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 24l8 7-8 7" fill="none" stroke="#3fb950" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 39h14" stroke="#c9d1d9" stroke-width="3.5" stroke-linecap="round"/></svg>`;
     case "photos":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#fff"/><g opacity=".9"><circle cx="24" cy="25" r="8" fill="#f59e0b"/><circle cx="40" cy="25" r="8" fill="#ef4444"/><circle cx="24" cy="39" r="8" fill="#22c55e"/><circle cx="40" cy="39" r="8" fill="#3b5bff"/></g></svg>`;
-    case "contact":
-      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#3b5bff"/><rect x="15" y="21" width="34" height="23" rx="3" fill="none" stroke="#fff" stroke-width="3"/><path d="M16 23l16 12 16-12" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
   }
   return "";
 }
 
 function iconButton(id, cls = "icon") {
   const item = FS[id];
-  const b = document.createElement("button");
-  b.type = "button";
+  let b;
+  if (item.type === "link") {
+    b = document.createElement("a");
+    b.href = item.href;
+    b.target = "_blank";
+    b.rel = "noopener";
+  } else {
+    b = document.createElement("button");
+    b.type = "button";
+    if (item.type === "email") b.dataset.email = item.email;
+    else b.dataset.open = id;
+  }
   b.className = cls;
-  b.dataset.open = id;
   b.innerHTML = `<span class="icon__art">${iconArt(id)}</span><span class="icon__label"></span>`;
   $(".icon__label", b).textContent = item.name;
   if (item.type === "link") b.title = item.href;
+  if (item.type === "email") b.title = item.email;
   return b;
 }
 
@@ -87,12 +119,13 @@ const wins = new Map();
 let zTop = 10;
 let cascade = 0;
 
-const SIZES = { folder: [580, 380], doc: [620, 560], image: [720, 520], photos: [720, 520], terminal: [640, 420], pdf: [760, 640], contact: [520, 300] };
+const SIZES = { folder: [560, 360], doc: [620, 560], image: [720, 520], photos: [720, 520], terminal: [640, 420], pdf: [760, 640], contact: [520, 300] };
 
 function open(id) {
   const item = FS[id];
   if (!item) return;
   if (item.type === "link") { window.open(item.href, "_blank", "noopener"); return; }
+  if (item.type === "email") { emailMe(); return; }
   if (wins.has(id)) { const w = wins.get(id); w.el.hidden = false; focus(id); return; }
 
   const el = document.createElement("section");
@@ -109,10 +142,11 @@ function open(id) {
       <div class="win__title">${item.type === "image" ? `<img src="${item.src}" alt="">` : iconArt(id).replace("<img ", '<img loading="eager" ')}<span></span></div>
     </header>
     <div class="win__body"></div>`;
-  $(".win__title span", el).textContent = item.name;
+  $(".win__title span", el).textContent = pathOf(id);
 
   // size + position, cascading so windows don't stack exactly
   const [dw, dh] = SIZES[item.type] || [600, 480];
+  el.setAttribute("aria-label", pathOf(id));
   const vw = window.innerWidth, vh = window.innerHeight;
   const menubar = 30, dock = 92;
   const w = Math.min(item.w || dw, vw - 32);
@@ -207,8 +241,7 @@ function render(id, body) {
       body.append(grid, status);
       break;
     }
-    case "doc":
-    case "contact": {
+    case "doc": {
       const doc = document.createElement("article");
       doc.className = "doc";
       doc.append($("#" + item.tpl).content.cloneNode(true));
@@ -239,7 +272,8 @@ function render(id, body) {
       fetch(item.src, { method: "HEAD" })
         .then((r) => {
           if (!r.ok) throw new Error();
-          body.innerHTML = `<iframe class="pdf" src="${item.src}" title="${item.name}"></iframe>`;
+          body.classList.add("win__body--pdf");
+          body.innerHTML = `<div class="pdfbar"><span>${item.name}</span><a href="${item.src}" target="_blank" rel="noopener">Open in new tab ↗</a><a href="${item.src}" download>Download</a></div><iframe class="pdf" src="${item.src}#view=FitH" title="${item.name}"></iframe>`;
         })
         .catch(() => {
           const doc = document.createElement("article");
@@ -297,20 +331,21 @@ function terminal(id, body) {
       open(k);
     },
     research: () => commands.open("lnn"),
-    experience: () => commands.open("experience"),
+    experience: () => commands.open("experience-md"),
     cv: () => commands.open("cv-pdf"),
     about: () => commands.open("about"),
     photos: () => commands.open("photos"),
-    contact: () => print('email     <a href="mailto:anmolxgoyal@gmail.com">anmolxgoyal@gmail.com</a>\nlinkedin  <a href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">linkedin.com/in/anmolxgoyal</a>\ngithub    <a href="https://github.com/AG-droid" target="_blank" rel="noopener">github.com/AG-droid</a>'),
+    email: () => { emailMe(); print(`<span class="t-dim">${EMAIL} copied to clipboard</span>`); },
+    contact: () => print(`email     <a href="mailto:${EMAIL}">${EMAIL}</a>\nlinkedin  <a href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">linkedin.com/in/anmolxgoyal</a>\ngithub    <a href="https://github.com/AG-droid" target="_blank" rel="noopener">github.com/AG-droid</a>`),
     neofetch: () => print(
 `<span class="t-accent">anmol@kcl</span>
 ---------
 <span class="t-accent">OS</span>         AnmolOS 26.10
 <span class="t-accent">Host</span>       King's College London
 <span class="t-accent">Kernel</span>     maths-with-statistics (final year)
-<span class="t-accent">Research</span>   liquid neural networks @ Oxford Dynamics
+<span class="t-accent">Research</span>   LTC networks as adaptive filters @ Oxford Dynamics
 <span class="t-accent">Robotics</span>   ROS2 · MoveIt · NVIDIA Isaac Sim
-<span class="t-accent">Languages</span>  English · Hindi · Spanish`),
+<span class="t-accent">Languages</span>  English · Hindi · Punjabi`),
     date: () => print(new Date().toString()),
     echo: (arg) => print(escapeHtml(arg)),
     clear: () => { out.innerHTML = ""; },
@@ -356,7 +391,7 @@ function buildDock() {
     if (id === "|") { const s = document.createElement("span"); s.className = "dock__sep"; dock.append(s); return; }
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "dock__item" + (["cv", "oxford"].includes(id) ? " dock__item--extra" : "");
+    b.className = "dock__item" + (["cv", "photos"].includes(id) ? " dock__item--extra" : "");
     b.dataset.open = id;
     b.dataset.id = id;
     b.setAttribute("aria-label", FS[id].name);
@@ -385,8 +420,25 @@ function tickClock() {
     + "  " + now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
+// Email: copy the address (always works) and try the mail app (works if one is set up)
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("is-on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("is-on"), 2600);
+}
+function emailMe() {
+  const copied = navigator.clipboard ? navigator.clipboard.writeText(EMAIL) : Promise.reject();
+  copied.then(() => toast(`Copied ${EMAIL}`), () => toast(EMAIL));
+  window.location.href = `mailto:${EMAIL}`;
+}
+
 // Anything with data-open (icons, dock, links inside docs) opens that item
 document.addEventListener("click", (e) => {
+  const mail = e.target.closest("[data-email]");
+  if (mail) { emailMe(); return; }
   const t = e.target.closest("[data-open]");
   if (t) open(t.dataset.open);
 });
