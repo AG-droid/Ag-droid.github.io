@@ -266,6 +266,8 @@ img { display: block; max-width: 100%; }
   text-underline-offset: 3px; cursor: pointer;
 }
 .t-cmd:hover { color: #a5d6ff; text-decoration-color: currentColor; }
+.t-cmd.t-file { color: #c9d1d9; text-decoration-color: #484f58; }
+.t-cmd.t-file:hover { color: #fff; }
 @media (max-width: 700px) { .term .t-banner { font-size: 7px; } .term { font-size: 12px; } }
 .term a { color: #79c0ff; }
 

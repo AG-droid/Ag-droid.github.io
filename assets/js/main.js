@@ -292,17 +292,41 @@ function render(id, body) {
 
 // ===================== Terminal =====================
 function terminal(id, body) {
-  body.innerHTML = `<div class="term"><pre class="term__out"></pre><div class="term__line"><span class="term__prompt">anmol@kcl:<b>~</b>$</span><input aria-label="Terminal input" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>`;
+  body.innerHTML = `<div class="term"><pre class="term__out"></pre><div class="term__line"><span class="term__prompt"></span><input aria-label="Terminal input" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>`;
   const out = $(".term__out", body), input = $("input", body), term = $(".term", body);
   const history = [];
   let hIndex = 0;
+  let cwd = "home";
+
+  // ~/Experience/Oxford Dynamics style path for a folder id
+  const pathStr = (k) => (k === "home" ? "~" : pathStr(PARENT[k] || "home") + "/" + FS[k].name);
+  const prompt = () => `<span class="term__prompt">anmol@kcl:<b>${escapeHtml(pathStr(cwd))}</b>$</span>`;
+  const setPrompt = () => { $(".term__line .term__prompt", body).outerHTML = prompt(); };
+  setPrompt();
 
   const print = (html = "", scroll = true) => { out.insertAdjacentHTML("beforeend", html + "\n"); if (scroll) body.scrollTop = body.scrollHeight; };
   const echo = (cmd) => {
     const line = document.createElement("span");
-    line.innerHTML = `<span class="term__prompt">anmol@kcl:<b>~</b>$</span> `;
+    line.innerHTML = prompt() + " ";
     line.append(document.createTextNode(cmd + "\n"));
     out.append(line);
+  };
+  // Resolve a path like "Experience/Oxford Dynamics", "..", "~/cv" relative to cwd
+  const bare = (n) => n.toLowerCase().replace(/\.(md|txt|pdf|jpg)$/, "");
+  const resolve = (arg) => {
+    let path = arg.trim().replace(/^["']|["']$/g, "").replace(/\\ /g, " ");
+    let at = cwd;
+    if (path.startsWith("~") || path.startsWith("/")) { at = "home"; path = path.replace(/^[~/]+/, ""); }
+    for (const part of path.split("/").filter(Boolean)) {
+      if (part === ".") continue;
+      if (part === "..") { at = PARENT[at] || "home"; continue; }
+      const kids = FS[at].children;
+      if (!kids) return null;
+      const q = bare(part);
+      at = kids.find((c) => bare(FS[c].name) === q) || kids.find((c) => bare(FS[c].name).startsWith(q));
+      if (!at) return null;
+    }
+    return at;
   };
   const find = (q) => {
     q = q.toLowerCase().replace(/\.(md|txt|pdf|jpg)$/, "").trim();
@@ -317,8 +341,11 @@ function terminal(id, body) {
     help: () => print(
 `<span class="t-accent">Available commands</span> <span class="t-dim">(type them, or click)</span>
   ${cmd("whoami")}who is this?
-  ${cmd("ls")}list what's on the desktop
-  open &lt;name&gt;  open a file or folder  <span class="t-dim">(e.g. open research)</span>
+  ${cmd("ls")}list the current folder
+  cd &lt;folder&gt;   move into a folder  <span class="t-dim">(cd .. to go back)</span>
+  cat &lt;file&gt;    read a file right here
+  open &lt;name&gt;  open it in a window  <span class="t-dim">(open . for this folder)</span>
+  ${cmd("pwd")}where am I?
   ${cmd("research")}what I'm working on now
   ${cmd("experience")}where I've worked
   ${cmd("cv")}open my CV
@@ -328,10 +355,37 @@ function terminal(id, body) {
   ${cmd("reboot")}turn it off and on again
   ${cmd("clear")}clear the screen`),
     whoami: () => print("Anmol Goyal: maths student at King's College London,\nvisiting student AI researcher at Oxford Dynamics."),
-    ls: () => print(DESKTOP.map((k) => (FS[k].type === "folder" ? `<span class="t-accent">${FS[k].name}/</span>` : FS[k].name)).join("   ")),
+    ls: (arg) => {
+      const k = arg ? resolve(arg) : cwd;
+      if (!k) return print(`<span class="t-err">ls: no such file or folder: ${escapeHtml(arg)}</span>`);
+      if (!FS[k].children) return print(escapeHtml(FS[k].name));
+      // every entry is clickable: folders cd into, everything else opens
+      print(FS[k].children.map((c) => {
+        const it = FS[c], dir = it.type === "folder", name = escapeHtml(it.name);
+        const target = escapeHtml(JSON.stringify((arg ? arg.replace(/\/$/, "") + "/" : "") + it.name));
+        return `<button type="button" class="t-cmd${dir ? "" : " t-file"}" data-cmd="${dir ? "cd" : "open"} ${target}">${name}${dir ? "/" : it.type === "link" ? " ↗" : ""}</button>`;
+      }).join("   ") || '<span class="t-dim">(empty)</span>');
+    },
+    cd: (arg) => {
+      const k = arg ? resolve(arg) : "home";
+      if (!k) return print(`<span class="t-err">cd: no such folder: ${escapeHtml(arg)}</span>`);
+      if (FS[k].type !== "folder") return print(`<span class="t-err">cd: not a folder: ${escapeHtml(FS[k].name)}</span>. Try <span class="t-accent">cat</span> or <span class="t-accent">open</span>.`);
+      cwd = k;
+      setPrompt();
+    },
+    pwd: () => print(escapeHtml(pathStr(cwd).replace(/^~/, "/home/anmol"))),
+    cat: (arg) => {
+      if (!arg) return print('<span class="t-err">usage: cat &lt;file&gt;</span>');
+      const k = resolve(arg) || find(arg);
+      if (!k) return print(`<span class="t-err">cat: no such file: ${escapeHtml(arg)}</span>`);
+      const it = FS[k];
+      if (it.type === "folder") return print(`<span class="t-err">cat: ${escapeHtml(it.name)}: is a folder</span>. Try <span class="t-accent">cd</span>.`);
+      if (it.type !== "doc") return commands.open(arg);
+      print(docText($("#" + it.tpl).content));
+    },
     open: (arg) => {
       if (!arg) return print('<span class="t-err">usage: open &lt;name&gt;</span>');
-      const k = find(arg);
+      const k = resolve(arg) || find(arg);
       if (!k) return print(`<span class="t-err">open: no such file or folder: ${escapeHtml(arg)}</span>`);
       print(`<span class="t-dim">opening ${escapeHtml(FS[k].name)} ...</span>`);
       open(k);
@@ -363,8 +417,7 @@ function terminal(id, body) {
       setTimeout(reboot, 700);
     },
   };
-  commands.cd = commands.open;
-  commands.cat = commands.open;
+  commands.dir = commands.ls;
 
   const run = (raw) => {
     echo(raw);
@@ -377,7 +430,23 @@ function terminal(id, body) {
   };
 
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Tab") {
+      // complete the last word against the current folder
+      e.preventDefault();
+      const m = input.value.match(/^(\S+\s+)(.*)$/);
+      if (!m) return;
+      const slash = m[2].lastIndexOf("/");
+      const dir = slash >= 0 ? resolve(m[2].slice(0, slash) || "/") : cwd;
+      const stem = m[2].slice(slash + 1).toLowerCase();
+      const hits = dir && FS[dir].children ? FS[dir].children.filter((c) => FS[c].name.toLowerCase().startsWith(stem)) : [];
+      if (hits.length === 1) {
+        const it = FS[hits[0]];
+        input.value = m[1] + m[2].slice(0, slash + 1) + it.name + (it.type === "folder" ? "/" : "");
+      } else if (hits.length > 1) {
+        echo(input.value);
+        print(hits.map((c) => escapeHtml(FS[c].name)).join("   "));
+      }
+    } else if (e.key === "Enter") {
       const raw = input.value.trim();
       input.value = "";
       run(raw);
@@ -407,6 +476,26 @@ const BANNER = [
   "██║  ██║██║ ╚████║██║ ╚═╝ ██║╚██████╔╝███████╗",
   "╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝",
 ];
+
+// Plain-text rendering of a document template for `cat`
+function docText(node) {
+  const lines = [];
+  const text = (el) => escapeHtml(el.textContent.replace(/\s+/g, " ").trim());
+  const walk = (el) => {
+    for (const c of el.children) {
+      const tag = c.tagName;
+      if (tag === "H1") lines.push(`<strong>${text(c).toUpperCase()}</strong>`, "");
+      else if (tag === "H2" || tag === "H3") lines.push(`<span class="t-accent">## ${text(c)}</span>`);
+      else if (tag === "LI") lines.push(`  • ${text(c)}`);
+      else if (tag === "BLOCKQUOTE") lines.push(`<span class="t-dim">  │ ${text(c)}</span>`, "");
+      else if (tag === "P" || tag === "DT" || tag === "DD") lines.push(text(c), "");
+      else if (c.children.length) { walk(c); if (tag === "UL" || tag === "OL") lines.push(""); }
+      else if (c.textContent.trim()) lines.push(text(c));
+    }
+  };
+  walk(node);
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
 
 function welcome(print, cmd) {
   const lines = [

@@ -29,7 +29,7 @@ I'm a Maths with Statistics student at **King's College London** and a visiting 
 |---|---|
 | 🖥️ **Desktop and windows** | Drag, focus, minimise, maximise and close windows, like a real OS |
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
-| ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with history and clickable shortcuts |
+| ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
@@ -72,7 +72,10 @@ anmol@kcl:~$ help
 | `cv` | Open my CV |
 | `email` | Write me a message |
 | `contact` | Print my links |
-| `ls`, `open <name>`, `cd`, `cat` | Explore the file system |
+| `cd <folder>`, `cd ..`, `cd ~` | Move around the file system (the prompt shows where you are) |
+| `ls`, `pwd` | List the current folder (click an entry to go into it or open it), print the path |
+| `cat <file>` | Read a document right in the terminal |
+| `open <name>`, `open .` | Open a file or the current folder in a window |
 | `about`, `whoami`, `photos` | Who I am |
 | `reboot` | Shut everything down and boot again |
 | `neofetch`, `date`, `echo`, `clear`, `exit` | The usual |
