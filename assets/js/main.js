@@ -534,6 +534,7 @@ async function sendMessage({ email, subject, message }) {
   try {
     const res = await fetch(FORM_ENDPOINT, {
       method: "POST",
+      signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined,
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
         access_key: FORM_KEY,
