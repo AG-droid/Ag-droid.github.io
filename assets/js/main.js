@@ -429,8 +429,7 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("is-on"), 2600);
 }
-// "New Message" window. mailto: only works when a mail app is set up, so it also
-// offers Gmail, Outlook and copy, which work for everyone.
+// "New Message" window: send via Gmail or Outlook on the web, or copy the address.
 function compose(body) {
   body.innerHTML = `
     <form class="compose" onsubmit="return false">
@@ -439,15 +438,13 @@ function compose(body) {
       <textarea name="message" placeholder="Write your message..."></textarea>
       <div class="compose__send">
         <span>Send with</span>
-        <a class="btn btn--primary" data-via="mail">Mail app</a>
-        <a class="btn" data-via="gmail" target="_blank" rel="noopener">Gmail ↗</a>
+        <a class="btn btn--primary" data-via="gmail" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="btn" data-via="outlook" target="_blank" rel="noopener">Outlook ↗</a>
       </div>
     </form>`;
   const subject = $('[name="subject"]', body), message = $('[name="message"]', body);
   const update = () => {
     const su = encodeURIComponent(subject.value), bo = encodeURIComponent(message.value);
-    $('[data-via="mail"]', body).href = `mailto:${EMAIL}?subject=${su}&body=${bo}`;
     $('[data-via="gmail"]', body).href = `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${su}&body=${bo}`;
     $('[data-via="outlook"]', body).href = `https://outlook.office.com/mail/deeplink/compose?to=${EMAIL}&subject=${su}&body=${bo}`;
   };
