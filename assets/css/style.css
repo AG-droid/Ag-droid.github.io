@@ -192,7 +192,7 @@ img { display: block; max-width: 100%; }
 .pdf { flex: 1; width: 100%; border: 0; display: block; background: #525659; }
 
 /* Compose */
-.compose { display: flex; flex-direction: column; height: 100%; }
+.compose { position: relative; display: flex; flex-direction: column; height: 100%; }
 .compose__row {
   display: flex; align-items: center; gap: 10px; padding: 10px 16px;
   border-bottom: .5px solid var(--win-line); font-size: 14px;
@@ -202,22 +202,20 @@ img { display: block; max-width: 100%; }
   flex: 1; min-width: 0; font: 15px/1.5 var(--ui); color: var(--win-text); background: none; border: 0; outline: 0;
 }
 .compose textarea { padding: 14px 16px; resize: none; min-height: 140px; }
-.compose__copy { font-size: 13px; color: var(--accent); }
+.compose__trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.compose__status { flex: 1; margin: 0; font-size: 13px; color: var(--win-muted); }
+.compose__status[data-kind="error"] { color: #e5484d; }
+.compose button.btn { padding: 9px 22px; }
+.compose button.btn:disabled { opacity: .6; cursor: default; }
+.compose__done { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+.compose__done svg { width: 56px; height: 56px; fill: none; stroke: #28c840; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 12px; }
+.compose__done h2 { margin: 0 0 6px; font-size: 20px; }
+.compose__done p { margin: 0; color: var(--win-muted); }
 .compose__send {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
   border-top: .5px solid var(--win-line); background: var(--win-bar);
 }
-.compose__send span { font-size: 13px; color: var(--win-muted); margin-right: 4px; }
 
-/* Toast */
-.toast {
-  position: fixed; left: 50%; bottom: calc(var(--dock-h) + 24px); z-index: 9500;
-  transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
-  padding: 10px 16px; border-radius: 10px; font-size: 13px; color: #fff;
-  background: rgba(30, 30, 34, .92); box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-  transition: opacity .2s, transform .2s;
-}
-.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 .muted { color: var(--win-muted); }
 
 /* Terminal */

@@ -420,44 +420,64 @@ function tickClock() {
     + "  " + now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-// Email: copy the address (always works) and try the mail app (works if one is set up)
-let toastTimer;
-function toast(msg) {
-  const t = $("#toast");
-  t.textContent = msg;
-  t.classList.add("is-on");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("is-on"), 2600);
-}
-// "New Message" window: send via Gmail or Outlook on the web, or copy the address.
+// "New Message" window. GitHub Pages can't send mail, so the form posts to
+// FormSubmit, which forwards it to my inbox with the sender as reply-to.
+const FORM_ENDPOINT = `https://formsubmit.co/ajax/${EMAIL}`;
+
 function compose(body) {
   body.innerHTML = `
-    <form class="compose" onsubmit="return false">
-      <label class="compose__row"><span>To</span><input value="${EMAIL}" readonly><button type="button" class="compose__copy">Copy</button></label>
-      <label class="compose__row"><span>Subject</span><input name="subject" placeholder="Hello from your website"></label>
-      <textarea name="message" placeholder="Write your message..."></textarea>
+    <form class="compose" novalidate>
+      <div class="compose__row"><span>To</span><input value="Anmol Goyal" readonly tabindex="-1"></div>
+      <label class="compose__row"><span>From</span><input name="email" type="email" placeholder="your@email.com" autocomplete="email" required></label>
+      <label class="compose__row"><span>Subject</span><input name="subject" placeholder="Hello from your website" maxlength="150"></label>
+      <textarea name="message" placeholder="Write your message..." required maxlength="5000"></textarea>
+      <input class="compose__trap" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="compose__send">
-        <span>Send with</span>
-        <a class="btn btn--primary" data-via="gmail" target="_blank" rel="noopener">Gmail ↗</a>
-        <a class="btn" data-via="outlook" target="_blank" rel="noopener">Outlook ↗</a>
+        <p class="compose__status" role="status"></p>
+        <button class="btn btn--primary" type="submit">Send</button>
       </div>
     </form>`;
-  const subject = $('[name="subject"]', body), message = $('[name="message"]', body);
-  const update = () => {
-    const su = encodeURIComponent(subject.value), bo = encodeURIComponent(message.value);
-    $('[data-via="gmail"]', body).href = `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${su}&body=${bo}`;
-    $('[data-via="outlook"]', body).href = `https://outlook.office.com/mail/deeplink/compose?to=${EMAIL}&subject=${su}&body=${bo}`;
-  };
-  subject.addEventListener("input", update);
-  message.addEventListener("input", update);
-  update();
-  $(".compose__copy", body).addEventListener("click", copyEmail);
-}
+  const form = $(".compose", body);
+  const status = $(".compose__status", body);
+  const send = $('[type="submit"]', body);
+  const setStatus = (msg, kind = "") => { status.textContent = msg; status.dataset.kind = kind; };
 
-function copyEmail() {
-  const done = () => toast(`Copied ${EMAIL}`);
-  if (navigator.clipboard) navigator.clipboard.writeText(EMAIL).then(done, () => toast(EMAIL));
-  else toast(EMAIL);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = form.email.value.trim(), message = form.message.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setStatus("Please enter a valid email address.", "error"); form.email.focus(); return; }
+    if (!message) { setStatus("Please write a message.", "error"); form.message.focus(); return; }
+    if (form._honey.value) return;
+
+    send.disabled = true;
+    setStatus("Sending...");
+    try {
+      const res = await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          email,
+          message,
+          _subject: `Website: ${form.subject.value.trim() || "New message"}`,
+          _replyto: email,
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || String(data.success) !== "true") throw new Error(data.message || "Send failed");
+      body.innerHTML = `
+        <div class="compose__done">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
+          <h2>Message sent</h2>
+          <p>Thanks for reaching out. I'll reply to <strong></strong> soon.</p>
+        </div>`;
+      $(".compose__done strong", body).textContent = email;
+    } catch (err) {
+      send.disabled = false;
+      setStatus("Couldn't send right now. You can email me directly at " + EMAIL + ".", "error");
+    }
+  });
 }
 
 // Anything with data-open (icons, dock, links inside docs) opens that item
