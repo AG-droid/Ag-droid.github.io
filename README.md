@@ -8,6 +8,7 @@
 [![GitHub Pages](https://img.shields.io/badge/hosted%20on-GitHub%20Pages-222?style=flat-square&logo=github)](https://pages.github.com)
 ![No frameworks](https://img.shields.io/badge/dependencies-none-28c840?style=flat-square)
 ![Vanilla JS](https://img.shields.io/badge/vanilla-JS%20%2B%20CSS-f7df1e?style=flat-square&logo=javascript&logoColor=black)
+[![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
 
 <a href="https://anmol-goyal.com">
   <img src=".github/preview.png" alt="AnmolOS: a desktop with folders, a dock and a terminal showing a welcome screen" width="900">
@@ -22,6 +23,36 @@
 Instead of a scrolling page, the portfolio is a desktop. Folders on the left hold my experience, research, projects and CV. A dock sits at the bottom, and a terminal greets you when the site loads. You can drag windows around, open documents, flick through photos, read the CV or send me a message without leaving the page.
 
 I'm a Maths with Statistics student at **King's College London** and a visiting student AI researcher at **Oxford Dynamics**. I work on robotics, physical AI and **liquid neural networks**.
+
+## How this was built
+
+I built this site with **[Claude Code](https://claude.com/claude-code)** as my pair programmer, and I'm upfront about that. Claude wrote most of the code. The product decisions, the design direction, the testing and the debugging that shaped it were mine. Here's what that looked like in practice.
+
+**Product & design**
+- **I set the concept.** The first version was a conventional scrolling portfolio. I didn't think it said anything about me, so I pointed at desktop-style sites I admired and changed direction to a browser "operating system".
+- **I made the calls on what to cut.** An iteration with LaTeX equations and canvas diagrams looked worse in the browser than on paper, so I scrapped it rather than polishing it.
+- **I designed the information architecture**: an *Experience* folder with *Oxford Dynamics* and *Leadership* inside, each with its own notes and a *Photos* folder, plus the desktop layout, wallpaper and dock.
+- **I came up with the features that give it personality**: the terminal greeting you on load, a `reboot` command that plays a full shutdown and boot sequence, and a `cd` that actually navigates instead of just opening windows.
+
+**Testing & debugging**
+
+I tested every change in a real browser and on my phone. Most of the bugs fixed here are ones I found and reported:
+- Project links that didn't open.
+- Email buttons that did nothing on machines without a mail app. This led to building a real send-from-site contact form.
+- The minimise button failing on maximised windows. The root cause was a CSS `display` rule overriding the `hidden` attribute.
+- Contact messages taking over a minute to send. I pushed for a fix, which meant moving to a faster email provider and sending in the background with notifications.
+- Stale versions after deploys, which led to cache-busting on every asset.
+
+**Engineering & ops**
+- Set up SSH deploys to GitHub Pages and the custom domain's DNS, including GitHub domain verification.
+- Configured and verified the form-to-email services end to end with real messages.
+- Asked the security question before anyone else did ("is this site secure?"). That led to a Content Security Policy, a referrer policy, input escaping, and a review of old endpoints left in the repo's history.
+
+**Content & accuracy**
+
+I reviewed every claim on the site and in the CV against what I actually did, and corrected what didn't match. An AI tool is only as trustworthy as the person checking its output.
+
+> The way I see it: AI tools let one person move at the speed of a small team. What still matters is taste, judgement, and the persistence to test, find what's broken and insist it's fixed. That's the part of this project I'm proudest of.
 
 ## Features
 
