@@ -92,6 +92,7 @@ There are also a couple of easter eggs. Try `sudo`.
 │   ├── js/main.js           file system, window manager, terminal, contact form, boot screen
 │   ├── img/                 wallpaper, Oxford Dynamics and event photos
 │   └── cv/                  CV (PDF)
+├── cv-src/                LaTeX source for the CV (build with latexmk, copy the PDF to assets/cv/)
 ├── favicon.ico
 └── CNAME                    custom domain → anmol-goyal.com
 ```
