@@ -20,7 +20,7 @@
 
 ## About
 
-Instead of a scrolling page, the portfolio is a desktop. Folders on the left hold my experience, research, projects and CV. A dock sits at the bottom, and a terminal greets you when the site loads. You can drag windows around, open documents, flick through photos, read the CV or send me a message without leaving the page.
+Instead of a scrolling page, the portfolio is a desktop. Folders on the left hold my experience, research and CV. A dock sits at the bottom, and a terminal greets you when the site loads. You can drag windows around, open documents, flick through photos, read the CV or send me a message without leaving the page.
 
 I'm a Maths with Statistics student at **King's College London** and a visiting student AI researcher at **Oxford Dynamics**. I work on robotics, physical AI and **liquid neural networks**.
 
@@ -83,10 +83,9 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 ├── Research/
 │   ├── Liquid Neural Networks.md
 │   └── Reading List.txt
-├── Projects/          → QuantBox, React experiments, Space Invaders, GitHub
 ├── CV/
 │   └── Anmol_Goyal_CV.pdf
-├── Contact/           → Contact.md, Email, LinkedIn, GitHub
+├── Contact/           → Contact.md, Email, LinkedIn, GitHub, Site Source
 └── Terminal
 ```
 

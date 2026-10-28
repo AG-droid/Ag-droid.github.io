@@ -1,7 +1,7 @@
 // ===================== File system =====================
 // Everything on the "computer". Docs point at <template> ids in index.html.
 const FS = {
-  home:          { name: "Anmol", type: "folder", glyph: "home", children: ["about", "experience", "research", "projects", "cv", "contact", "terminal"] },
+  home:          { name: "Anmol", type: "folder", glyph: "home", children: ["about", "experience", "research", "cv", "contact", "terminal"] },
   about:         { name: "About Me.txt", type: "doc", tpl: "doc-about", w: 600, h: 560 },
 
   experience:    { name: "Experience", type: "folder", glyph: "experience", children: ["experience-md", "oxford", "leadership"] },
@@ -23,20 +23,15 @@ const FS = {
   lnn:           { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 660, h: 640 },
   reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
 
-  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["p-quantbox", "p-react", "p-invaders", "p-github"] },
-  "p-quantbox":  { name: "QuantBox", type: "link", href: "https://github.com/AG-droid/QuantBox" },
-  "p-react":     { name: "React Experiments", type: "link", href: "https://github.com/AG-droid/React-JS" },
-  "p-invaders":  { name: "Space Invaders", type: "link", href: "https://github.com/AG-droid/Projects/blob/master/Space_Invaders/Space_invaders.py" },
-  "p-github":    { name: "GitHub Profile", type: "link", href: "https://github.com/AG-droid" },
-
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
   "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=5", w: 760, h: 720 },
 
-  contact:       { name: "Contact", type: "folder", glyph: "contact", children: ["contact-md", "c-email", "c-linkedin", "c-github"] },
+  contact:       { name: "Contact", type: "folder", glyph: "contact", children: ["contact-md", "c-email", "c-linkedin", "c-github", "c-source"] },
   "contact-md":  { name: "Contact.md", type: "doc", tpl: "doc-contact", w: 540, h: 320 },
   "c-email":     { name: "Email", type: "compose", w: 560, h: 480 },
   "c-linkedin":  { name: "LinkedIn", type: "link", href: "https://www.linkedin.com/in/anmolxgoyal/" },
   "c-github":    { name: "GitHub", type: "link", href: "https://github.com/AG-droid" },
+  "c-source":    { name: "Site Source", type: "link", href: "https://github.com/AG-droid/Ag-droid.github.io" },
 
   photos:        { name: "Photos", type: "photos", w: 720, h: 520 },
   terminal:      { name: "Terminal", type: "terminal", w: 760, h: 640 },
@@ -64,7 +59,6 @@ const GLYPHS = {
   research: '<path d="M29 31v6l-6 10h18l-6-10v-6M27 31h10"/>',
   oxford: '<path d="M22 48h14M27 48v-5l6-6 6 4"/><circle cx="33" cy="37" r="1.5"/><path d="M39 41l3-3"/>',
   leadership: '<rect x="29" y="30" width="6" height="11" rx="3"/><path d="M25 38a7 7 0 0 0 14 0M32 45v3"/>',
-  projects: '<path d="M27 33l-6 6 6 6M37 33l6 6-6 6"/>',
   cv: '<circle cx="32" cy="35" r="4"/><path d="M24 48a8 7 0 0 1 16 0"/>',
 };
 function iconArt(id) {
@@ -507,7 +501,7 @@ function welcome(print, cmd) {
     `<span class="t-dim">▸</span> Into robotics, physical AI and liquid neural networks`,
     "",
     `This site works like a little computer. You can:`,
-    `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, Projects, CV`,
+    `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, CV`,
     `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
     `  <span class="t-ok">✓</span> or stay right here and run a command:`,
     "",
