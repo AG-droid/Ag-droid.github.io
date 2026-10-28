@@ -284,7 +284,7 @@ function render(id, body) {
       terminal(id, body);
       break;
     case "compose":
-      compose(body);
+      compose(body, id);
       break;
   }
 }
@@ -476,7 +476,10 @@ function tickClock() {
 // FormSubmit, which forwards it to my inbox with the sender as reply-to.
 const FORM_ENDPOINT = `https://formsubmit.co/ajax/${EMAIL}`;
 
-function compose(body) {
+// A draft that failed to send, restored the next time the compose window opens
+let draft = null;
+
+function compose(body, id) {
   body.innerHTML = `
     <form class="compose" novalidate>
       <div class="compose__row"><span>To</span><input class="compose__to" value="${EMAIL}" readonly aria-label="Recipient"><button type="button" class="compose__copy">Copy</button></div>
@@ -491,54 +494,99 @@ function compose(body) {
     </form>`;
   const form = $(".compose", body);
   const status = $(".compose__status", body);
-  const send = $('[type="submit"]', body);
   const setStatus = (msg, kind = "") => { status.textContent = msg; status.dataset.kind = kind; };
+  if (draft) { form.email.value = draft.email; form.subject.value = draft.subject; form.message.value = draft.message; draft = null; }
 
-  // Copy the address, with a fallback for browsers without the Clipboard API
-  const copyBtn = $(".compose__copy", body), to = $(".compose__to", body);
-  copyBtn.addEventListener("click", () => {
-    const done = () => { copyBtn.textContent = "Copied ✓"; setTimeout(() => (copyBtn.textContent = "Copy"), 2000); };
-    const fallback = () => { to.select(); try { document.execCommand("copy"); done(); } catch (e) {} };
-    navigator.clipboard ? navigator.clipboard.writeText(EMAIL).then(done, fallback) : fallback();
-  });
+  const copyBtn = $(".compose__copy", body);
+  copyBtn.addEventListener("click", () => copyEmail(copyBtn));
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const email = form.email.value.trim(), message = form.message.value.trim();
+    const email = form.email.value.trim(), message = form.message.value.trim(), subject = form.subject.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setStatus("Please enter a valid email address.", "error"); form.email.focus(); return; }
     if (!message) { setStatus("Please write a message.", "error"); form.message.focus(); return; }
     if (form._honey.value) return;
 
-    send.disabled = true;
-    setStatus("Sending... this can take a few seconds.");
-    try {
-      const res = await fetch(FORM_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          email,
-          message,
-          _subject: `Website: ${form.subject.value.trim() || "New message"}`,
-          _replyto: email,
-          _template: "table",
-          _captcha: "false",
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || String(data.success) !== "true") throw new Error(data.message || "");
-      body.innerHTML = `
-        <div class="compose__done">
-          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
-          <h2>Message sent</h2>
-          <p>Thanks for reaching out. I'll reply to <strong></strong> soon.</p>
-        </div>`;
-      $(".compose__done strong", body).textContent = email;
-    } catch (err) {
-      send.disabled = false;
-      const reason = /activation/i.test(err.message) ? "The form is being set up. " : "Couldn't send right now. ";
-      setStatus(reason + "You can email me directly at " + EMAIL + ".", "error");
-    }
+    // Send in the background so the visitor can carry on browsing
+    close(id);
+    sendMessage({ email, subject, message });
   });
+}
+
+// Copy the address, with a fallback for browsers without the Clipboard API
+function copyEmail(btn) {
+  const label = btn.textContent;
+  const done = () => { btn.textContent = "Copied ✓"; setTimeout(() => (btn.textContent = label), 2000); };
+  const fallback = () => {
+    const t = document.createElement("textarea");
+    t.value = EMAIL; document.body.append(t); t.select();
+    try { document.execCommand("copy"); done(); } catch (e) {}
+    t.remove();
+  };
+  navigator.clipboard ? navigator.clipboard.writeText(EMAIL).then(done, fallback) : fallback();
+}
+
+async function sendMessage({ email, subject, message }) {
+  const pending = notify("sending", "Sending your message…", "It's on the way. Feel free to keep exploring.");
+  try {
+    const res = await fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        email,
+        message,
+        _subject: `Website: ${subject || "New message"}`,
+        _replyto: email,
+        _template: "table",
+        _captcha: "false",
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || String(data.success) !== "true") throw new Error(data.message || "");
+    dismiss(pending);
+    notify("ok", "Message sent", `Thanks! I'll reply to ${email} soon.`, 6000);
+  } catch (err) {
+    dismiss(pending);
+    draft = { email, subject, message };
+    const n = notify("error", "Message failed to send", `You can email me directly at ${EMAIL}.`);
+    const actions = document.createElement("div");
+    actions.className = "toast__actions";
+    actions.innerHTML = `<button type="button">Copy email</button><button type="button">Try again</button>`;
+    const [copyBtn, retryBtn] = actions.children;
+    copyBtn.addEventListener("click", () => copyEmail(copyBtn));
+    retryBtn.addEventListener("click", () => { dismiss(n); open("c-email"); });
+    $(".toast__text", n).append(actions);
+  }
+}
+
+// ===================== Notifications =====================
+function notify(kind, title, text, timeout = 0) {
+  let stack = $("#toasts");
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.id = "toasts";
+    stack.setAttribute("aria-live", "polite");
+    document.body.append(stack);
+  }
+  const n = document.createElement("div");
+  n.className = "toast";
+  n.dataset.kind = kind;
+  n.innerHTML = `
+    <span class="toast__icon" aria-hidden="true"></span>
+    <div class="toast__text"><strong></strong><p></p></div>
+    <button class="toast__close" type="button" aria-label="Dismiss">×</button>`;
+  $("strong", n).textContent = title;
+  $("p", n).textContent = text;
+  $(".toast__close", n).addEventListener("click", () => dismiss(n));
+  stack.append(n);
+  if (timeout) setTimeout(() => dismiss(n), timeout);
+  return n;
+}
+
+function dismiss(n) {
+  if (!n.isConnected || n.classList.contains("is-leaving")) return;
+  n.classList.add("is-leaving");
+  setTimeout(() => n.remove(), 200);
 }
 
 // Anything with data-open (icons, dock, links inside docs) opens that item
