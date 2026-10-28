@@ -158,7 +158,8 @@ function open(id) {
   render(id, $(".win__body", el));
 
   $(".win__btn--close", el).addEventListener("click", () => close(id));
-  $(".win__btn--min", el).addEventListener("click", () => minimise(id));
+  // Yellow restores a maximised window to its normal size, otherwise hides it
+  $(".win__btn--min", el).addEventListener("click", () => el.classList.contains("is-max") ? el.classList.remove("is-max") : minimise(id));
   $(".win__btn--max", el).addEventListener("click", () => el.classList.toggle("is-max"));
   $(".win__bar", el).addEventListener("dblclick", (e) => { if (!e.target.closest(".win__btns")) el.classList.toggle("is-max"); });
   el.addEventListener("pointerdown", () => focus(id), true);
