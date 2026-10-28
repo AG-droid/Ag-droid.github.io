@@ -450,7 +450,7 @@ function compose(body) {
     if (form._honey.value) return;
 
     send.disabled = true;
-    setStatus("Sending...");
+    setStatus("Sending... this can take a few seconds.");
     try {
       const res = await fetch(FORM_ENDPOINT, {
         method: "POST",
@@ -465,7 +465,7 @@ function compose(body) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || String(data.success) !== "true") throw new Error(data.message || "Send failed");
+      if (!res.ok || String(data.success) !== "true") throw new Error(data.message || "");
       body.innerHTML = `
         <div class="compose__done">
           <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
@@ -475,7 +475,8 @@ function compose(body) {
       $(".compose__done strong", body).textContent = email;
     } catch (err) {
       send.disabled = false;
-      setStatus("Couldn't send right now. You can email me directly at " + EMAIL + ".", "error");
+      const reason = /activation/i.test(err.message) ? "The form is being set up. " : "Couldn't send right now. ";
+      setStatus(reason + "You can email me directly at " + EMAIL + ".", "error");
     }
   });
 }
