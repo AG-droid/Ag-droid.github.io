@@ -34,7 +34,7 @@ const FS = {
 
   contact:       { name: "Contact", type: "folder", glyph: "contact", children: ["contact-md", "c-email", "c-linkedin", "c-github"] },
   "contact-md":  { name: "Contact.md", type: "doc", tpl: "doc-contact", w: 540, h: 320 },
-  "c-email":     { name: "Email", type: "email", email: "anmol.goyal@kcl.ac.uk" },
+  "c-email":     { name: "Email", type: "compose", w: 560, h: 480 },
   "c-linkedin":  { name: "LinkedIn", type: "link", href: "https://www.linkedin.com/in/anmolxgoyal/" },
   "c-github":    { name: "GitHub", type: "link", href: "https://github.com/AG-droid" },
 
@@ -80,7 +80,7 @@ function iconArt(id) {
     }
     case "image":
       return `<img src="${item.src}" alt="" loading="lazy">`;
-    case "email":
+    case "compose":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#3b5bff"/><rect x="17" y="22" width="30" height="21" rx="3" fill="none" stroke="#fff" stroke-width="3"/><path d="M18 24l14 10 14-10" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`;
     case "link":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#fff"/><path d="M26 38l14-14M28 24h12v12" fill="none" stroke="#3b5bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -103,14 +103,12 @@ function iconButton(id, cls = "icon") {
   } else {
     b = document.createElement("button");
     b.type = "button";
-    if (item.type === "email") b.dataset.email = item.email;
-    else b.dataset.open = id;
+    b.dataset.open = id;
   }
   b.className = cls;
   b.innerHTML = `<span class="icon__art">${iconArt(id)}</span><span class="icon__label"></span>`;
   $(".icon__label", b).textContent = item.name;
   if (item.type === "link") b.title = item.href;
-  if (item.type === "email") b.title = item.email;
   return b;
 }
 
@@ -119,13 +117,12 @@ const wins = new Map();
 let zTop = 10;
 let cascade = 0;
 
-const SIZES = { folder: [560, 360], doc: [620, 560], image: [720, 520], photos: [720, 520], terminal: [640, 420], pdf: [760, 640], contact: [520, 300] };
+const SIZES = { compose: [560, 480], folder: [560, 360], doc: [620, 560], image: [720, 520], photos: [720, 520], terminal: [640, 420], pdf: [760, 640], contact: [520, 300] };
 
 function open(id) {
   const item = FS[id];
   if (!item) return;
   if (item.type === "link") { window.open(item.href, "_blank", "noopener"); return; }
-  if (item.type === "email") { emailMe(); return; }
   if (wins.has(id)) { const w = wins.get(id); w.el.hidden = false; focus(id); return; }
 
   const el = document.createElement("section");
@@ -286,6 +283,9 @@ function render(id, body) {
     case "terminal":
       terminal(id, body);
       break;
+    case "compose":
+      compose(body);
+      break;
   }
 }
 
@@ -335,7 +335,7 @@ function terminal(id, body) {
     cv: () => commands.open("cv-pdf"),
     about: () => commands.open("about"),
     photos: () => commands.open("photos"),
-    email: () => { emailMe(); print(`<span class="t-dim">${EMAIL} copied to clipboard</span>`); },
+    email: () => commands.open("c-email"),
     contact: () => print(`email     <a href="mailto:${EMAIL}">${EMAIL}</a>\nlinkedin  <a href="https://www.linkedin.com/in/anmolxgoyal/" target="_blank" rel="noopener">linkedin.com/in/anmolxgoyal</a>\ngithub    <a href="https://github.com/AG-droid" target="_blank" rel="noopener">github.com/AG-droid</a>`),
     neofetch: () => print(
 `<span class="t-accent">anmol@kcl</span>
@@ -429,16 +429,42 @@ function toast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("is-on"), 2600);
 }
-function emailMe() {
-  const copied = navigator.clipboard ? navigator.clipboard.writeText(EMAIL) : Promise.reject();
-  copied.then(() => toast(`Copied ${EMAIL}`), () => toast(EMAIL));
-  window.location.href = `mailto:${EMAIL}`;
+// "New Message" window. mailto: only works when a mail app is set up, so it also
+// offers Gmail, Outlook and copy, which work for everyone.
+function compose(body) {
+  body.innerHTML = `
+    <form class="compose" onsubmit="return false">
+      <label class="compose__row"><span>To</span><input value="${EMAIL}" readonly><button type="button" class="compose__copy">Copy</button></label>
+      <label class="compose__row"><span>Subject</span><input name="subject" placeholder="Hello from your website"></label>
+      <textarea name="message" placeholder="Write your message..."></textarea>
+      <div class="compose__send">
+        <span>Send with</span>
+        <a class="btn btn--primary" data-via="mail">Mail app</a>
+        <a class="btn" data-via="gmail" target="_blank" rel="noopener">Gmail ↗</a>
+        <a class="btn" data-via="outlook" target="_blank" rel="noopener">Outlook ↗</a>
+      </div>
+    </form>`;
+  const subject = $('[name="subject"]', body), message = $('[name="message"]', body);
+  const update = () => {
+    const su = encodeURIComponent(subject.value), bo = encodeURIComponent(message.value);
+    $('[data-via="mail"]', body).href = `mailto:${EMAIL}?subject=${su}&body=${bo}`;
+    $('[data-via="gmail"]', body).href = `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${su}&body=${bo}`;
+    $('[data-via="outlook"]', body).href = `https://outlook.office.com/mail/deeplink/compose?to=${EMAIL}&subject=${su}&body=${bo}`;
+  };
+  subject.addEventListener("input", update);
+  message.addEventListener("input", update);
+  update();
+  $(".compose__copy", body).addEventListener("click", copyEmail);
+}
+
+function copyEmail() {
+  const done = () => toast(`Copied ${EMAIL}`);
+  if (navigator.clipboard) navigator.clipboard.writeText(EMAIL).then(done, () => toast(EMAIL));
+  else toast(EMAIL);
 }
 
 // Anything with data-open (icons, dock, links inside docs) opens that item
 document.addEventListener("click", (e) => {
-  const mail = e.target.closest("[data-email]");
-  if (mail) { emailMe(); return; }
   const t = e.target.closest("[data-open]");
   if (t) open(t.dataset.open);
 });

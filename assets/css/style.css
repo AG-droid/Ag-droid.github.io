@@ -191,6 +191,24 @@ img { display: block; max-width: 100%; }
 .pdfbar a { color: var(--accent); text-decoration: none; white-space: nowrap; }
 .pdf { flex: 1; width: 100%; border: 0; display: block; background: #525659; }
 
+/* Compose */
+.compose { display: flex; flex-direction: column; height: 100%; }
+.compose__row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  border-bottom: .5px solid var(--win-line); font-size: 14px;
+}
+.compose__row span { width: 56px; color: var(--win-muted); flex: none; }
+.compose input, .compose textarea {
+  flex: 1; min-width: 0; font: 15px/1.5 var(--ui); color: var(--win-text); background: none; border: 0; outline: 0;
+}
+.compose textarea { padding: 14px 16px; resize: none; min-height: 140px; }
+.compose__copy { font-size: 13px; color: var(--accent); }
+.compose__send {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px;
+  border-top: .5px solid var(--win-line); background: var(--win-bar);
+}
+.compose__send span { font-size: 13px; color: var(--win-muted); margin-right: 4px; }
+
 /* Toast */
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--dock-h) + 24px); z-index: 9500;
