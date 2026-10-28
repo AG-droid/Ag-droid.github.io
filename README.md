@@ -74,6 +74,7 @@ anmol@kcl:~$ help
 | `contact` | Print my links |
 | `ls`, `open <name>`, `cd`, `cat` | Explore the file system |
 | `about`, `whoami`, `photos` | Who I am |
+| `reboot` | Shut everything down and boot again |
 | `neofetch`, `date`, `echo`, `clear`, `exit` | The usual |
 
 There are also a couple of easter eggs. Try `sudo`.

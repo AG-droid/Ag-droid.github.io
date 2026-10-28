@@ -325,6 +325,7 @@ function terminal(id, body) {
   ${cmd("email")}send me a message
   ${cmd("contact")}links to find me
   ${cmd("neofetch")}system info
+  ${cmd("reboot")}turn it off and on again
   ${cmd("clear")}clear the screen`),
     whoami: () => print("Anmol Goyal: maths student at King's College London,\nvisiting student AI researcher at Oxford Dynamics."),
     ls: () => print(DESKTOP.map((k) => (FS[k].type === "folder" ? `<span class="t-accent">${FS[k].name}/</span>` : FS[k].name)).join("   ")),
@@ -357,6 +358,10 @@ function terminal(id, body) {
     sudo: () => print('<span class="t-err">anmol is not in the sudoers file. This incident will be reported.</span>'),
     ros2: () => print("ros2: the arm controller runs on a real robot in Harwell, not in your browser :)"),
     exit: () => close(id),
+    reboot: () => {
+      print('<span class="t-err">Broadcast message from anmol@kcl: the system is going down for reboot NOW!</span>');
+      setTimeout(reboot, 700);
+    },
   };
   commands.cd = commands.open;
   commands.cat = commands.open;
@@ -617,35 +622,84 @@ const BOOT = [
   "[  OK  ] Reached target: Desktop",
 ];
 
-function boot(done) {
+const SHUTDOWN = [
+  "[  OK  ] Stopped liquid-neurons.service",
+  "[  OK  ] Saved learned time constants",
+  "[  OK  ] Parked 6-DoF arm in home position",
+  "[  OK  ] Stopped ros2-daemon",
+  "[  OK  ] Closed NVIDIA Isaac Sim session",
+  "[  OK  ] Stopped maths-with-statistics.service",
+  "[ WAIT ] Syncing filesystems ...",
+  "[  OK  ] Unmounted /home/anmol",
+  "[  OK  ] Reached target: Reboot",
+  "",
+  "reboot: Restarting system",
+];
+
+const bootLine = (text) => escapeHtml(text)
+  .replace("[  OK  ]", '[  <span class="ok">OK</span>  ]')
+  .replace("[ WAIT ]", '[ <span class="wait">WAIT</span> ]');
+
+// Prints lines one by one on the boot screen, pausing longer on WAIT lines
+function typeLines(lines, done, speed = 110) {
+  const log = $("#boot-log");
+  let i = 0, timer;
+  const step = () => {
+    if (i >= lines.length) { done(); return; }
+    const line = lines[i++];
+    log.insertAdjacentHTML("beforeend", bootLine(line) + "\n");
+    timer = setTimeout(step, line.includes("WAIT") ? 500 : speed);
+  };
+  step();
+  return () => clearTimeout(timer);
+}
+
+function showBootScreen() {
+  const screen = $("#boot");
+  $("#boot-log").innerHTML = "";
+  screen.classList.remove("is-done");
+  screen.hidden = false;
+  return screen;
+}
+
+function boot(done, force = false) {
   let seen = false;
   try { seen = sessionStorage.getItem("booted") === "1"; } catch (e) {}
-  if (seen || reducedMotion) return done();
+  if (!force && (seen || reducedMotion)) return done();
 
-  const screen = $("#boot"), log = $("#boot-log");
-  screen.hidden = false;
-  let i = 0, finished = false, timer;
+  const screen = showBootScreen();
+  $(".boot__hint").hidden = false;
+  let finished = false, stop, timer;
   const finish = () => {
     if (finished) return;
     finished = true;
-    clearTimeout(timer);
+    stop(); clearTimeout(timer);
     try { sessionStorage.setItem("booted", "1"); } catch (e) {}
     screen.classList.add("is-done");
     setTimeout(() => { screen.hidden = true; }, 400);
+    screen.removeEventListener("click", finish);
     document.removeEventListener("keydown", finish);
     done();
   };
-  const step = () => {
-    if (i >= BOOT.length) { timer = setTimeout(finish, 500); return; }
-    const line = escapeHtml(BOOT[i++])
-      .replace("[  OK  ]", '[  <span class="ok">OK</span>  ]')
-      .replace("[ WAIT ]", '[ <span class="wait">WAIT</span> ]');
-    log.insertAdjacentHTML("beforeend", line + "\n");
-    timer = setTimeout(step, BOOT[i - 1].includes("WAIT") ? 380 : 110);
-  };
+  stop = typeLines(BOOT, () => { timer = setTimeout(finish, 500); });
   screen.addEventListener("click", finish);
   document.addEventListener("keydown", finish);
-  step();
+}
+
+// Shut everything down, go dark for a moment, then boot again
+function reboot() {
+  // the terminal running the command goes last
+  const apps = [...wins.keys()].sort((a, b) => (a === "terminal") - (b === "terminal")).map((k) => FS[k].name);
+  [...wins.keys()].forEach(close);
+  if (reducedMotion) { open("terminal"); return; }
+
+  showBootScreen();
+  $(".boot__hint").hidden = true;
+  const lines = [...apps.map((name) => `[  OK  ] Closed ${name}`), ...SHUTDOWN];
+  typeLines(lines, () => setTimeout(() => {
+    $("#boot-log").innerHTML = "";
+    setTimeout(() => boot(() => open("terminal"), true), 1200);
+  }, 900), 170);
 }
 
 // ===================== Start =====================
