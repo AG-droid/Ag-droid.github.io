@@ -26,10 +26,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=31">
-  <script defer src="assets/js/arm.js?v=31"></script>
-  <script defer src="assets/js/ask.js?v=31"></script>
-  <script defer src="assets/js/main.js?v=31"></script>
+  <link rel="stylesheet" href="assets/css/style.css?v=32">
+  <script defer src="assets/js/arm.js?v=32"></script>
+  <script defer src="assets/js/ask.js?v=32"></script>
+  <script defer src="assets/js/main.js?v=32"></script>
 </head>
 <body>
   <!-- Boot screen (shown once per visit) -->
@@ -160,6 +160,50 @@
     <h2>How the real one works</h2>
     <p>Two ROS 2 nodes. The client node reads commands, manages waypoints and reads the live <code>/joint_states</code> topic. The planner node holds the Cartesian and joint-space planners and executes the paths through MoveIt. Both run on a <code>MultiThreadedExecutor</code> in a background thread, so the blocking command prompt and live ROS communication can run at the same time.</p>
     <p class="note">In the browser there's no ROS. The terminal runs a line-by-line JavaScript port of <code>client.py</code>, a small IK solver and planner stand in for MoveIt, and the only collisions checked are with the table and the robot's base. The arm is the UR7e model from Universal Robots' ROS 2 description (BSD-3-Clause).</p>
+  </template>
+
+  <template id="doc-agent">
+    <p class="kicker">Projects / Anmol Agent / README.md</p>
+    <h1>anmol, my AI agent</h1>
+    <p class="lead">An AI version of me that lives in this site's terminal. It answers questions about my work, my studies and this website in the first person, and it runs entirely on your own GPU.</p>
+    <p><button class="btn btn--primary" type="button" data-open="agent-app">Launch Agent</button></p>
+
+    <h2>Try it</h2>
+    <ol>
+      <li>Click <strong>Launch Agent</strong>, or type <code>agent</code> in any terminal on this site.</li>
+      <li>The first time, pick a model. It downloads once and your browser caches it for next time.</li>
+      <li>Ask anything at <code>you ›</code>, like what I'm working on, what's fun to try on the site, or how this agent works. Follow-ups like "tell me more" work too.</li>
+      <li>Type <code>exit</code> or press Esc to leave. For a single question, use <code>ask &lt;question&gt;</code> instead.</li>
+    </ol>
+
+    <h2>What it knows</h2>
+    <p>Only what's on this site: every document on the desktop, the site's README (features, things to try, terminal commands, how it was built) and my CV. It has no internet access and no memory between visits.</p>
+
+    <h2>How it works</h2>
+    <p>It's retrieval-augmented generation (RAG) running entirely in the browser:</p>
+    <ol>
+      <li><strong>Retrieval.</strong> The site's documents (split at their headings), the README's sections and my CV are indexed with BM25. Each message pulls in the few passages that match it best.</li>
+      <li><strong>Generation.</strong> An open model runs in your browser with WebLLM on WebGPU. It gets those passages, today's date and the last two exchanges, answers as me in the first person, and the passages it used are listed underneath as sources.</li>
+    </ol>
+
+    <h2>Keeping it honest</h2>
+    <ul>
+      <li>It's told to use only facts from the passages, before and after your question, and to say when something isn't on my site rather than guess.</li>
+      <li>If none of a question's real topics appear anywhere on the site (say, a skill I've never listed), it says so without asking the model at all. Greetings and words like "at the moment" don't count as topics, so friendly questions still get answered.</li>
+      <li>Date ranges are written out in full and the model knows today's date, so it gets tenses right.</li>
+      <li>Answers are short and low-temperature, and the model is told not to add feelings, plans or achievements that aren't on the site.</li>
+    </ul>
+
+    <h2>Choosing the models</h2>
+    <p>I tested six open models through whole conversations full of trick questions. Four made things up about me (for example, skills I've never listed, or that I'm still an intern) and were dropped: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. The two that stayed accurate are the ones you can pick: <strong>Llama 3.2 3B</strong> (1.8 GB, recommended) and <strong>Llama 3.1 8B</strong> (4.5 GB, the best answers on a strong GPU).</p>
+
+    <h2>Privacy and limits</h2>
+    <ul>
+      <li>No server and no API key: your questions never leave your device. Only the model weights are downloaded, from Hugging Face.</li>
+      <li>It needs a browser with WebGPU (recent Chrome, Edge or Safari, and a decent GPU). Without it, the agent shows the parts of the site that match your question instead.</li>
+      <li>It's a small model, so it can still make mistakes. Check the sources, or email me.</li>
+    </ul>
+    <p class="note">Built with WebLLM (Apache-2.0) and Meta's Llama models.</p>
   </template>
 
   <template id="doc-reading">

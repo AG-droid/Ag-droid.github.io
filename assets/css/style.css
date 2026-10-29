@@ -260,6 +260,7 @@ img { display: block; max-width: 100%; }
 .term .t-err { color: #ff7b72; }
 .term .t-ok { color: #3fb950; }
 .term .t-banner { display: block; margin: 4px 0 14px; color: #79c0ff; font: 12px/1.05 var(--mono); white-space: pre; overflow: hidden; }
+.term .t-banner--agent { color: #3fb950; margin-bottom: 6px; }
 .term strong { color: #fff; }
 .t-cmd {
   font: inherit; color: #79c0ff; text-decoration: underline; text-decoration-color: rgba(121, 192, 255, .35);

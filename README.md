@@ -62,12 +62,22 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
 | 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: `client.py` runs in its own terminal window and drives a real UR7e model in a WebGL viewer |
-| 🤖 **anmol, my AI agent** | Type `agent` in the terminal to chat with an AI version of me that answers in the first person from my site and CV. It's a RAG pipeline that runs entirely on the visitor's GPU: they pick a model, it downloads once, and nothing leaves their device |
+| 🤖 **anmol, my AI agent** | Type `agent` in the terminal, or open Projects → Anmol Agent, to chat with an AI version of me that answers in the first person from my site and CV. It's a RAG pipeline that runs entirely on the visitor's GPU: they pick a model, it downloads once, and nothing leaves their device |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
 | 🔒 **Locked down** | Content Security Policy, no third-party scripts, all user input escaped |
 | 🪶 **No build step** | Plain HTML, CSS and JavaScript. The only library, WebLLM, is loaded on demand when someone uses `ask` |
+
+## Things to try
+
+- **Drive a real robot arm.** Open Projects → Arm Controller → Launch Controller, or type `controller` in the terminal. A terminal runs a port of the ROS 2 controller I wrote during my internship, and a 3D UR7e arm moves as you type commands like `move z 100` or `pick_and_place`.
+- **Chat with me.** Type `agent` in the terminal, or open Projects → Anmol Agent → Launch Agent. It's an AI version of me that runs on your own GPU and answers from my site and CV.
+- **Get around like a real terminal.** `cd Experience`, `ls`, `cat "About Me.txt"`, `open .` and Tab completion all work, and everything `ls` prints is clickable.
+- **Reboot the computer.** Type `reboot` to watch every app close, the system shut down and boot back up.
+- **Find the easter eggs.** Try `sudo`, `neofetch` or `whoami`.
+- **Use it like a desktop.** Drag windows, maximise them with the green button or a double-click on the title bar, and minimise them with yellow. On a phone it turns into a home screen with full-screen apps.
+- **Send me a message** from Contact → Email without leaving the page.
 
 ## What's on the desktop
 
@@ -86,9 +96,12 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 │   ├── Liquid Neural Networks.md
 │   └── Reading List.txt
 ├── Projects/
-│   └── Arm Controller/
-│       ├── Launch Controller   (client.py in a terminal + the UR7e in a 3D viewer)
-│       └── README.md           how to drive the arm
+│   ├── Arm Controller/
+│   │   ├── Launch Controller   (client.py in a terminal + the UR7e in a 3D viewer)
+│   │   └── README.md           how to drive the arm
+│   └── Anmol Agent/
+│       ├── Launch Agent        (chat with an AI version of me in its own terminal)
+│       └── README.md           how the agent works
 ├── CV/
 │   └── Anmol_Goyal_CV.pdf
 ├── Contact/           → Contact.md, Email, LinkedIn, GitHub, Site Source
@@ -148,7 +161,7 @@ There are also a couple of easter eggs. Try `sudo`.
 - **The window manager** handles stacking order, dragging with pointer events, minimise to the dock and maximise. Windows open in a slight cascade so they don't stack exactly on top of each other.
 - **The contact form** posts to [Web3Forms](https://web3forms.com) from the browser. The window closes as soon as you hit send, and a notification tracks the message. If sending fails, your draft is kept and you get a *Try again* button.
 - **The arm controller** opens two windows. The terminal runs a line-by-line JavaScript port of my ROS 2 `client.py`, with the same commands, prompts, messages and error handling. A small planner stands in for `motion_server.py` and MoveIt: a damped least-squares IK solver, Cartesian paths in 5 mm steps, and joint-space moves. The viewer draws the real UR7e meshes with a hand-written WebGL renderer, posed with the kinematic chain from the official URDF (`base_link` frame). The meshes come from [Universal Robots' ROS 2 description](https://github.com/UniversalRobots/Universal_Robots_ROS2_Description) (BSD-3-Clause, licence in `assets/models/ur7e/`), converted to a compact binary.
-- **`ask` is retrieval-augmented generation in the browser.** The site's documents (split at their headings) and the CV are indexed with BM25. A question pulls the best-matching passages, and a small open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers using only those passages and lists them as sources. It answers as me, in the first person, and `agent` keeps the last two exchanges so follow-ups like "tell me more" work. Visitors choose the model (Llama 3.2 3B or Llama 3.1 8B). It downloads once and is cached by the browser, and nothing is sent to a server. Accuracy guardrails:
+- **`ask` is retrieval-augmented generation in the browser.** The site's documents (split at their headings), this README (read live from the site, so the agent always knows the current features) and the CV are indexed with BM25. A question pulls the best-matching passages, and a small open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers using only those passages and lists them as sources. It answers as me, in the first person, and `agent` keeps the last two exchanges so follow-ups like "tell me more" work. Visitors choose the model (Llama 3.2 3B or Llama 3.1 8B). It downloads once and is cached by the browser, and nothing is sent to a server. Accuracy guardrails:
   - Low temperature.
   - The rule "answer only from the context" is stated before and after the question.
   - The CV's experience section is included for work questions, so different roles don't get mixed up.

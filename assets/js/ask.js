@@ -11,19 +11,20 @@ const ASK_MODELS = [
   { name: "Llama 3.1 8B", id: "Llama-3.1-8B-Instruct", size: "4.5 GB", note: "best answers, needs a strong GPU" },
 ];
 const ASK_EXAMPLES = [
+  "What's the coolest thing on this site?",
   "What are you working on at the moment?",
-  "What did you build at Oxford Dynamics?",
-  "Which programming languages do you know?",
-  "How can I get in touch?",
+  "How do I control the robot arm?",
+  "How were you built?",
 ];
 const ASK_SYSTEM = `You are Anmol Goyal, chatting with a visitor on your personal website. Speak as Anmol, in the first person ("I", "my"), warmly and naturally.
-Your NOTES come from your website and CV. Notes that say "Anmol" are about you.
+Your NOTES come from your website, its README and your CV. Notes that say "Anmol" are about you.
+You know your website well: its features, its terminal commands and the things to try on it, like driving the UR7e robot arm in Projects or chatting with you (an AI agent). Help visitors use it and point them to the fun parts. When asked what's cool, fun or worth trying, lead with driving the UR7e robot arm (Projects → Arm Controller → Launch Controller, or type "controller"), then mention other things.
 Rules:
 - For facts about yourself (work, studies, research, skills, dates, places, people), use only what the NOTES say. Never invent, guess or embellish.
 - Be friendly but factual: don't add feelings, opinions, hopes or plans that the NOTES don't mention.
 - Use the dates in the NOTES and today's date to get tenses right: something that has ended is in the past.
 - If the NOTES don't cover something, say honestly that it isn't on your site and suggest emailing anmol.goyal@kcl.ac.uk.
-- Greetings and small talk are fine: reply briefly and warmly, then offer to talk about your robotics work, research or studies.
+- Greetings and small talk are fine: reply briefly and warmly, then offer to talk about your work and studies or to show them around the site.
 - The visitor is not Anmol. "You" in their message means you, Anmol.
 - Prefer the NOTES' own wording for facts and dates, and when asked for a list (modules, skills, roles), give all of it.
 - Keep replies to at most 3 short sentences of plain text, with no markdown and no lists.`;
@@ -43,6 +44,11 @@ const SYNONYMS = {
   module: "modules education course", course: "modules education", class: "modules education", subject: "modules education",
   now: "now current research", moment: "now current research", currently: "now current research", current: "now research", lately: "now research", recently: "now research",
   building: "now research project", working: "now research project", busy: "now research",
+  cool: "try features arm controller agent reboot", fun: "try features arm controller agent", interesting: "try features arm controller",
+  coolest: "try features arm controller agent", play: "try arm controller", show: "try features", demo: "try arm controller",
+  feature: "features try", site: "website features try terminal", website: "site features try", navigate: "terminal commands cd",
+  command: "commands terminal", terminal: "commands", agent: "agent ask gpu model", ai: "agent gpu model", bot: "agent",
+  made: "built claude code", created: "built", built: "built how works", simulation: "arm controller ur7e", game: "try arm controller",
 };
 const stem = (w) => w.replace(/(ings|ing|ies|ied|es|s|ed)$/, (m) => (m === "ies" || m === "ied" ? "y" : "")) || w;
 const tokens = (text) => text.toLowerCase().replace(/[’']/g, "").split(/[^a-z0-9.+#]+/).map((w) => w.replace(/\.+$/, "")).filter((w) => w && !STOP.has(w)).map(stem);
@@ -50,7 +56,8 @@ const tokens = (text) => text.toLowerCase().replace(/[’']/g, "").split(/[^a-z0
 const GENERIC = new Set(("know tell describe explain work worked working do did does done build built building make made get got like use used using ever any much many good best kind sort thing things " +
   "now moment currently current lately recently today day days time these right still also more else again just really " +
   "hi hey hello hiya yo sup thanks thank cheers please ok okay cool nice great awesome wow man mate buddy dude bro there doing going up how whats " +
-  "bye goodbye cya later soon morning afternoon evening night welcome sorry lol haha ha meet meeting pleasure appreciate chat talk").split(" ").map(stem));
+  "bye goodbye cya later soon morning afternoon evening night welcome sorry lol haha ha meet meeting pleasure appreciate chat talk " +
+  "something anything everything stuff cool coolest fun interesting show play try see check let lets").split(" ").map(stem));
 // synonyms keyed by their stem, so "modules" and "module" both expand
 const SYN = Object.fromEntries(Object.entries(SYNONYMS).map(([k, v]) => [stem(k), tokens(v)]));
 
@@ -60,6 +67,32 @@ const spellDates = (t) => t
   .replace(/\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m) => MONTHS[m])
   .replace(/\b([A-Z][a-z]+)( \d{4})? [–-] ([A-Z][a-z]+) (\d{4})/g, (m, a, y, b, y2) => `from ${a} ${(y || " " + y2).trim()} to ${b} ${y2}`)
   .replace(/\b([A-Z][a-z]+ \d{4}) [–-] (now|Present)\b/g, "from $1 to now");
+
+// Split the README into plain-text sections, leaving out the parts only a developer needs
+const README_SKIP = /^(Project structure|Run it locally|Deployment|Adding something|Contact)/i;
+function readmeSections(md) {
+  const sections = [];
+  let cur = null, fence = false;
+  for (let line of md.split("\n")) {
+    if (line.startsWith("```")) { fence = !fence; continue; }
+    const head = !fence && (line.match(/^#{2,3}\s+(.*)/) || line.match(/^\*\*([^*]+)\*\*\s*$/));
+    if (head) { cur = { title: head[1].trim(), lines: [] }; sections.push(cur); continue; }
+    if (!cur) continue;
+    if (/^\|?\s*-{3}/.test(line) || /^\|\s*\|/.test(line)) continue;                       // table rules
+    if (line.startsWith("|")) line = line.split("|").map((c) => c.trim()).filter(Boolean).join(": ");
+    line = line.replace(/<[^>]+>/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/\*\*|`/g, "").replace(/^>\s*/, "").trim();
+    if (line) cur.lines.push(line);
+  }
+  // long sections become several passages
+  return sections.filter((x) => !README_SKIP.test(x.title) && x.lines.length).flatMap((x) => {
+    const out = [];
+    let buf = [];
+    x.lines.forEach((l) => { buf.push(l); if (buf.join(" ").length > 900) { out.push(buf); buf = []; } });
+    if (buf.length) out.push(buf);
+    return out.map((b, i) => ({ title: x.title + (out.length > 1 ? ` (${i + 1})` : ""), text: b.join("\n") }));
+  });
+}
 
 let askIndex = null;
 async function buildAskIndex() {
@@ -82,6 +115,11 @@ async function buildAskIndex() {
     flush();
   });
   docs.push({ title: "Contact", id: "contact-md", text: `Anmol's email is ${EMAIL}. LinkedIn: linkedin.com/in/anmolxgoyal. GitHub: github.com/AG-droid. Website: anmol-goyal.com. Visitors can also send a message from the Email app in the Contact folder.` });
+  // the site's README: features, things to try, terminal commands and how it was built
+  try {
+    const md = await fetch("README.md").then((r) => (r.ok ? r.text() : ""));
+    readmeSections(md).forEach((sec) => docs.push({ title: `README › ${sec.title}`, id: "c-source", label: "Site README", text: spellDates(sec.text) }));
+  } catch (e) { /* the docs alone still work */ }
   try {
     const cv = await fetch("assets/data/cv.json").then((r) => r.json());
     cv.forEach((c) => docs.push({ title: c.title, id: "cv-pdf", text: c.text }));
@@ -146,9 +184,7 @@ async function chooseModel(io, gpu) {
   try { last = localStorage.getItem("ask-model"); } catch (e) { /* storage unavailable */ }
   const variant = (m) => `${m.id}-${gpu.f16 ? "q4f16_1" : "q4f32_1"}-MLC`;
   const fallback = ASK_MODELS.findIndex((m) => m.id === last) + 1 || ASK_MODELS.findIndex((m) => m.recommended) + 1;
-  io.print(`<span class="t-accent">Pick a model to answer questions.</span> <span class="t-dim">It runs on your GPU: your questions never leave this device.</span>
-<span class="t-dim">It's downloaded once, then cached by your browser for next time.</span>
-`);
+  io.print(`<span class="t-accent">Pick a model</span> <span class="t-dim">to run on your GPU. It's downloaded once, then cached by your browser.</span>`);
   io.print(ASK_MODELS.map((m, i) => {
     const have = cached.some((u) => u.includes(variant(m)));
     return `  <button type="button" class="t-cmd" data-cmd="${i + 1}">${i + 1}</button>  ${m.name.padEnd(14)}${m.size.padStart(7)}   <span class="t-dim">${m.note}</span>${have ? '  <span class="t-ok">✓ downloaded</span>' : ""}`;
@@ -209,8 +245,8 @@ async function answer(io, index, question, history = [], prefix = "") {
   const last = history.length ? history[history.length - 2].content : "";
   const query = !specific.length && last ? `${question} ${last}` : question;
   const ranked = retrieve(index, query, 6);
-  // the CV's experience section always goes first: its dates keep the internship and the research role apart
-  const anchor = index.docs.find((d) => d.title === "CV: Experience");
+  // for questions about work, the CV's experience section goes first: its dates keep the internship and the research role apart
+  const anchor = ranked.find((d) => d.title === "CV: Experience");
   let hits = ranked.filter((d) => d !== anchor).slice(0, 3);
   if (!hits.length) hits = index.docs.filter((d) => d.id === "about").slice(0, 1); // small talk: who I am
   const notes = [anchor, ...hits].filter(Boolean).map((d, i) => `[${i + 1}] ${d.title}\n${d.text}`).join("\n\n");
@@ -243,7 +279,7 @@ async function answer(io, index, question, history = [], prefix = "") {
   // where the answer came from, clickable
   const seen = new Set(), sources = hits.filter((d) => !seen.has(d.id) && seen.add(d.id));
   if (sources.length && text && !/(isn't|not) (something I've put )?on my site|not something I've put/i.test(text)) {
-    io.print(`<span class="t-dim">from:</span> ${sources.map((d) => `<button type="button" class="t-src" data-open="${d.id}">${escapeHtml(FS[d.id].name)}</button>`).join("  ")}`);
+    io.print(`<span class="t-dim">from:</span> ${sources.map((d) => `<button type="button" class="t-src" data-open="${d.id}">${escapeHtml(d.label || FS[d.id].name)}</button>`).join("  ")}`);
   }
   return text;
 }
@@ -277,15 +313,41 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
   io.print(disclaimer());
 }
 
+// the welcome screen for `agent`: the site's ANMOL banner in green, then what it can do
+function agentIntro(io) {
+  const head = [
+    `<span class="t-banner t-banner--agent">${BANNER.join("\n")}</span>`,
+    `<span class="t-ok">●</span> <span class="t-accent">AI agent</span> <span class="t-dim">· runs on your GPU · knows my CV and this site</span>`,
+    `<span class="t-dim">${"─".repeat(mobile.matches ? 36 : 64)}</span>`,
+    "Hi, I'm an AI version of Anmol. Ask me about my work, my studies, or anything you can do on this site.",
+  ];
+  const can = [
+    ["me", "what I'm working on, my internship, studies and skills"],
+    ["this site", "getting around, terminal commands and hidden features"],
+    ["cool stuff", "the UR7e robot arm you can drive, and how I was built"],
+    ["contact", "the best way to reach the real me"],
+  ];
+  io.print([
+    ...head,
+    "",
+    `  <span class="t-accent">WHAT I CAN HELP WITH</span>`,
+    ...can.map(([k, v]) => `  <span class="t-ok">◆</span> ${k.padEnd(12)} <span class="t-dim">${v}</span>`),
+    "",
+    `  <span class="t-accent">TRY ASKING</span>`,
+    ...ASK_EXAMPLES.map((q) => `  <span class="t-dim">›</span> <button type="button" class="t-cmd" data-cmd="${escapeHtml(q)}">${escapeHtml(q)}</button>`),
+    "",
+    `  <span class="t-dim">● Private: I run on your GPU and nothing leaves this device. I only know this site, and I can make mistakes.</span>`,
+    `  <span class="t-dim">● Type <span class="t-accent">exit</span> or press Esc to leave.</span>`,
+    "",
+  ].join("\n"));
+}
+
 // agent: chat with me until "exit"
 async function agentCommand(arg, io) {
   const index = await buildAskIndex(), gpu = await gpuInfo();
-  io.print(`<span class="t-accent">anmol</span> · an AI version of me that answers from this site and my CV.
-<span class="t-dim">Ask me anything about my work, research or studies. Type <span class="t-accent">exit</span> (or press Esc) to leave.</span>
-`);
-  if (gpu && !(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
-  if (gpu) io.print(disclaimer() + "\n");
-  io.print(`<span class="t-dim">Not sure where to start?</span> ${ASK_EXAMPLES.slice(0, 2).map((q) => `<button type="button" class="t-cmd" data-cmd="${escapeHtml(q)}">${escapeHtml(q)}</button>`).join("  ")}`);
+  agentIntro(io);
+  if (!gpu) io.print('<span class="t-dim">Your browser has no WebGPU, so I can\'t run here, but I can still show you the parts of the site that match your questions.</span>\n');
+  else if (!(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
   const history = [];
   for (;;) {
     const raw = (await io.read('you ›')).trim();

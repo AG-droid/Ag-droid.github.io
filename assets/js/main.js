@@ -23,12 +23,16 @@ const FS = {
   lnn:           { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 660, h: 640 },
   reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
 
-  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm"] },
+  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm", "agent"] },
   arm:           { name: "Arm Controller", type: "folder", glyph: "arm", children: ["arm-app", "arm-readme"] },
   "arm-app":     { name: "Launch Controller", type: "app", opens: ["arm-sim", "arm-term"] },
   "arm-sim":     { name: "UR7e Simulation", type: "armview", w: 600, h: 640 },
   "arm-term":    { name: "Terminal: client.py", type: "armterm", w: 740, h: 640 },
   "arm-readme":  { name: "README.md", type: "doc", tpl: "doc-arm", w: 680, h: 660 },
+  agent:         { name: "Anmol Agent", type: "folder", glyph: "agent", children: ["agent-app", "agent-readme"] },
+  "agent-app":   { name: "Launch Agent", type: "app", icon: "agent", opens: ["agent-term"] },
+  "agent-term":  { name: "anmol agent", type: "terminal", autorun: "agent", w: 820, h: 780 },
+  "agent-readme": { name: "README.md", type: "doc", tpl: "doc-agent", w: 680, h: 660 },
 
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
   "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=6", w: 760, h: 720 },
@@ -69,6 +73,7 @@ const GLYPHS = {
   cv: '<circle cx="32" cy="35" r="4"/><path d="M24 48a8 7 0 0 1 16 0"/>',
   projects: '<path d="M27 33l-6 6 6 6M37 33l6 6-6 6"/>',
   arm: '<path d="M24 48h12M28 48v-6l7-7 6 4"/><circle cx="35" cy="35" r="1.6"/><path d="M41 39v4"/>',
+  agent: '<path d="M22 32h20v11H30l-5 4v-4h-3z"/><path d="M27 37.5h.01M32 37.5h.01M37 37.5h.01"/>',
 };
 function iconArt(id) {
   const item = FS[id];
@@ -91,6 +96,8 @@ function iconArt(id) {
     case "armterm":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 24l8 7-8 7" fill="none" stroke="#3fb950" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 39h14" stroke="#c9d1d9" stroke-width="3.5" stroke-linecap="round"/></svg>`;
     case "app":
+      if (item.icon === "agent") return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 20h30v18H30l-7 6v-6h-6z" fill="none" stroke="#3fb950" stroke-width="3" stroke-linejoin="round"/><g fill="#79c0ff"><circle cx="25" cy="29" r="2.2"/><circle cx="32" cy="29" r="2.2"/><circle cx="39" cy="29" r="2.2"/></g></svg>`;
+    // falls through to the robot arm icon
     case "armview":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#1f2328" stroke="#30363d"/><path d="M18 49h16" stroke="#7f93ab" stroke-width="4" stroke-linecap="round"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M26 47V36l12-12 6 6" stroke="#d5dae1" stroke-width="5"/><path d="M44 30v6M41 36h6" stroke="#79c0ff" stroke-width="2.5"/></g><circle cx="26" cy="36" r="3.5" fill="#7f93ab"/><circle cx="38" cy="24" r="3.5" fill="#7f93ab"/></svg>`;
     case "photos":
@@ -539,7 +546,9 @@ function terminal(id, body) {
     if (!window.getSelection().toString()) input.focus();
   });
 
-  welcome(print, cmd);
+  // a terminal opened by an app starts by running its command (e.g. the agent)
+  if (FS[id].autorun) run(FS[id].autorun);
+  else welcome(print, cmd);
   wins.get(id).focusInput = () => { if (!mobile.matches) input.focus({ preventScroll: true }); };
 }
 
