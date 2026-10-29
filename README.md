@@ -64,7 +64,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 
 | | |
 |---|---|
-| 🖥️ **Desktop and windows** | Drag, focus, minimise, maximise and close windows, like a real OS |
+| 🖥️ **Desktop and windows** | Drag, focus, minimise, maximise and close windows, like a real OS. Anything you open that isn't in the dock pops into it while it's running, like on a Mac |
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
 | 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: `client.py` runs in its own terminal window and drives a real UR7e model in a WebGL viewer |
