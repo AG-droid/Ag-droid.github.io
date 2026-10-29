@@ -26,13 +26,19 @@ I'm a Maths with Statistics student at **King's College London** and a visiting 
 
 ## How this was built
 
-I built this site with **[Claude Code](https://claude.com/claude-code)** as my pair programmer, and I'm upfront about that. Claude wrote most of the code. The product decisions, the design direction, the testing and the debugging that shaped it were mine. Here's what that looked like in practice.
+I designed and led this project, and used **[Claude Code](https://claude.com/claude-code)**, an AI coding agent, to write most of the implementation. My part was the engineering around the code: deciding what to build and how it should behave, setting the requirements, reviewing what came back, testing it on real devices, and tracking down what was broken until it was fixed. Here's what that looked like in practice.
 
 **Product & design**
 - **I set the concept.** The first version was a conventional scrolling portfolio. I didn't think it said anything about me, so I pointed at desktop-style sites I admired and changed direction to a browser "operating system".
 - **I made the calls on what to cut.** An iteration with LaTeX equations and canvas diagrams looked worse in the browser than on paper, so I scrapped it rather than polishing it.
 - **I designed the information architecture**: an *Experience* folder with *Oxford Dynamics* and *Leadership* inside, each with its own notes and a *Photos* folder, plus the desktop layout, wallpaper and dock.
 - **I came up with the features that give it personality**: the terminal greeting you on load, a `reboot` command that plays a full shutdown and boot sequence, and a `cd` that actually navigates instead of just opening windows.
+
+**The arm controller and the agent**
+- **I came up with both.** Putting the controller from my internship on the site so visitors can drive a UR7e, and an AI version of me that runs on the visitor's own GPU, with no server and nothing leaving their device.
+- **I set the bar for the arm.** I rejected the first version: I wanted my own `client.py` commands reproduced faithfully, in its own terminal window like the real setup, driving an accurate UR7e model rather than a hand-drawn arm.
+- **I shaped how the agent behaves.** Speaking in the first person as me, letting visitors choose the model, knowing the whole site rather than only my research, and offering to open things ("show me your CV" → "Want me to open it?").
+- **I tuned it by using it.** I found its guardrails were refusing friendly questions, that it fixated on my research, that it crashed my phone when loading a model, and that it misread terminal commands typed into the chat. Each one led to a fix, including a no-download lite mode for phones.
 
 **Testing & debugging**
 
