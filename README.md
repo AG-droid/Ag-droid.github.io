@@ -168,7 +168,7 @@ There are also a couple of easter eggs. Try `sudo`.
   - If none of a question's specific words appear anywhere on the site, it says so without asking the model at all. Greetings, filler and time words ("hey", "at the moment") don't count as topics, so friendly questions still get answered.
   - Today's date is given to the model, and date ranges are spelled out ("from June 2026 to September 2026") so it gets tenses right.
 
-  I tested six candidate models through whole conversations and dropped the four that made things up: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. Browsers without WebGPU get the matching passages instead.
+  I tested six candidate models through whole conversations and dropped the four that made things up: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. **Lite mode** needs no model. It classifies the question (current work, internship, studies, skills, the arm, things to try and so on) and replies with the most relevant lines from the site and CV, turned into first person. It's the default on phones, which don't give a browser tab enough memory for a 2 GB model, and in browsers without WebGPU. If loading a model ever crashes the tab, a flag left in `localStorage` makes the agent suggest lite mode on the next visit.
 - **Caching:** GitHub Pages caches pages for 10 minutes, so the CSS and JS are loaded with a `?v=N` query string. Bump `N` in `index.html` whenever they change.
 
 ### Adding something to the desktop

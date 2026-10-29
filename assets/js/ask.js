@@ -161,8 +161,13 @@ function retrieve(index, question, k = 4) {
 }
 
 // ---------- the model ----------
-let askEngine = null, askModel = null, webllm = null;
+let askEngine = null, askModel = null, askLite = false, webllm = null;
 const loadWebllm = async () => (webllm = webllm || await import("./vendor/web-llm-0.2.86.js"));
+// Lite mode needs no model: it replies with the most relevant lines from the site
+const LITE = { name: "Lite mode", id: "lite", lite: true, size: "none", note: "no download: exact lines from my site, works everywhere" };
+// phones (and iPads, which report as Macs) don't give a browser tab enough memory for these models
+const isPhone = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) || mobile.matches;
+const CRASH_KEY = "agent-loading"; // set while a model loads; still there on the next visit if loading crashed the page
 
 async function gpuInfo() {
   try {
@@ -179,26 +184,45 @@ async function cachedModels() {
 }
 
 async function chooseModel(io, gpu) {
+  let last = null, crashed = null;
+  try {
+    last = localStorage.getItem("ask-model");
+    crashed = localStorage.getItem(CRASH_KEY);
+    localStorage.removeItem(CRASH_KEY);
+  } catch (e) { /* storage unavailable */ }
+  if (!gpu) {
+    io.print('<span class="t-dim">Your browser has no WebGPU, so I can\'t run an AI model here. I\'ll use lite mode and answer with the exact lines from my site.</span>');
+    return LITE;
+  }
+  if (crashed) io.print(`<span class="t-err">Last time, loading ${escapeHtml(crashed)} closed this page: your device ran out of memory for it.</span> <span class="t-dim">Lite mode is the safe choice here.</span>\n`);
+  const phone = isPhone(), options = [...ASK_MODELS, LITE];
   const cached = await cachedModels();
-  let last = null;
-  try { last = localStorage.getItem("ask-model"); } catch (e) { /* storage unavailable */ }
   const variant = (m) => `${m.id}-${gpu.f16 ? "q4f16_1" : "q4f32_1"}-MLC`;
-  const fallback = ASK_MODELS.findIndex((m) => m.id === last) + 1 || ASK_MODELS.findIndex((m) => m.recommended) + 1;
+  const fallback = crashed || phone ? options.length : options.findIndex((m) => m.id === last) + 1 || options.findIndex((m) => m.recommended) + 1;
   io.print(`<span class="t-accent">Pick a model</span> <span class="t-dim">to run on your GPU. It's downloaded once, then cached by your browser.</span>`);
-  io.print(ASK_MODELS.map((m, i) => {
-    const have = cached.some((u) => u.includes(variant(m)));
-    return `  <button type="button" class="t-cmd" data-cmd="${i + 1}">${i + 1}</button>  ${m.name.padEnd(14)}${m.size.padStart(7)}   <span class="t-dim">${m.note}</span>${have ? '  <span class="t-ok">✓ downloaded</span>' : ""}`;
+  io.print(options.map((m, i) => {
+    const have = !m.lite && cached.some((u) => u.includes(variant(m)));
+    const note = m.lite ? m.note : phone ? `${m.note}; may not fit in a phone's memory` : m.note;
+    return `  <button type="button" class="t-cmd" data-cmd="${i + 1}">${i + 1}</button>  ${m.name.padEnd(14)}${m.size.padStart(7)}   <span class="t-dim">${note}</span>${have ? '  <span class="t-ok">✓ downloaded</span>' : ""}`;
   }).join("\n"));
-  const raw = (await io.read(`model [1-${ASK_MODELS.length}, Enter = ${fallback}, n = cancel] &gt;`)).trim().toLowerCase();
+  const raw = (await io.read(`model [1-${options.length}, Enter = ${fallback}, n = cancel] &gt;`)).trim().toLowerCase();
   if (raw === "n" || raw === "q" || raw === "\u001b") return null;
-  const pick = ASK_MODELS[(raw === "" ? fallback : parseInt(raw, 10)) - 1];
-  if (!pick) { io.print('<span class="t-err">Not a model number.</span> Run <span class="t-accent">ask</span> again to choose.'); return null; }
-  return { ...pick, full: variant(pick) };
+  const pick = options[(raw === "" ? fallback : parseInt(raw, 10)) - 1];
+  if (!pick) { io.print('<span class="t-err">Not a model number.</span> Run <span class="t-accent">agent --model</span> to choose again.'); return null; }
+  return pick.lite ? pick : { ...pick, full: variant(pick) };
 }
 
 async function loadModel(io, model) {
+  if (model.lite) {
+    if (askEngine) { await askEngine.unload(); askEngine = null; }
+    askLite = true;
+    askModel = model;
+    io.print(`<span class="t-ok">✓</span> Lite mode: I'll answer with the exact lines from my site. <span class="t-dim">(agent --model to switch)</span>`);
+    return true;
+  }
   const bar = io.el(`<span class="t-dim">Loading ${model.name}…</span>`);
   io.busy(() => {}, false);
+  try { localStorage.setItem(CRASH_KEY, model.name); } catch (e) { /* storage unavailable */ }
   try {
     const lib = await loadWebllm();
     if (askEngine) { await askEngine.unload(); askEngine = null; }
@@ -210,22 +234,83 @@ async function loadModel(io, model) {
       },
     });
     askModel = model;
+    askLite = false;
     try { localStorage.setItem("ask-model", model.id); } catch (e) { /* storage unavailable */ }
     bar.innerHTML = `<span class="t-ok">✓</span> ${model.name} is ready on your GPU.`;
     return true;
   } catch (e) {
     askEngine = null;
-    bar.innerHTML = `<span class="t-err">Couldn't load ${model.name}: ${escapeHtml(String(e.message || e).split("\n")[0].slice(0, 160))}</span>\n<span class="t-dim">A smaller model may fit your GPU better. Run</span> <span class="t-accent">ask --model</span> <span class="t-dim">to pick another.</span>`;
+    bar.innerHTML = `<span class="t-err">Couldn't load ${model.name}: ${escapeHtml(String(e.message || e).split("\n")[0].slice(0, 160))}</span>\n<span class="t-dim">Run</span> <span class="t-accent">agent --model</span> <span class="t-dim">and pick lite mode or another model.</span>`;
     return false;
   } finally {
+    try { localStorage.removeItem(CRASH_KEY); } catch (e) { /* storage unavailable */ }
     io.busy(null);
   }
+}
+
+// ---------- lite mode: reply with the site's own lines ----------
+const GREETING = /^(hi|hey|hello|hiya|yo|sup|good (morning|afternoon|evening)|thanks|thank you|cheers|bye|goodbye|see you)\b/i;
+// CV bullets start with a verb ("Picked up ROS 2…"); give them a subject
+const CV_VERB = /^(Joined|Picked|Recreated|Leading|Investigating|Represented|Founded|Selected|Presented|Hosted|Analysed|Built|Ran|Grew)\b/;
+function firstPerson(line, fromCv) {
+  let s = line.replace(/^[-•]\s*/, "").replace(/\bAnmol's\b/g, "my").trim();
+  if (fromCv && CV_VERB.test(s)) s = (/ing$/.test(s.split(" ")[0]) ? "I'm " : "I ") + s[0].toLowerCase() + s.slice(1);
+  else if (fromCv && /\(from [^)]+\)\.?$/.test(s)) s = (/to now\)/.test(s) ? "I've been " : "I was ") + s; // a role line
+  s = s[0].toUpperCase() + s.slice(1);
+  return /[.!?)]$/.test(s) ? s : s + ".";
+}
+// What kind of question it is decides which passages the reply may come from.
+// Each intent: how to spot it, which passages answer it, and which lines to prefer.
+const LITE_INTENTS = [
+  { name: "contact", re: /\b(contact|e-?mail|reach|linkedin|github|in touch|hire|message)\b/i, docs: (d) => d.title === "Contact", prefer: /email is/ },
+  { name: "fun", re: /\b(cool|coolest|fun|try|play|game|features?|show me|interesting|demo|impressive)\b/i, docs: (d) => /Things to try/.test(d.title), prefer: /robot arm|Chat with me|Reboot/ },
+  { name: "arm", re: /\b(arm|robot|controller|ur7e|move|pick_and_place)\b/i, docs: (d) => d.id === "arm-readme" && /Quick start|Moving/.test(d.title), prefer: /Launch Controller|move z|Enter Command/ },
+  { name: "built", re: /\b(how (were|was|did) (you|this|the site|it)|built|made|claude|tech stack)\b/i, docs: (d) => /README › (How this was built|Product|Testing)/.test(d.title), prefer: /Claude Code|decisions|tested/ },
+  { name: "intern", re: /\b(intern|internship|oxford|summer|od)\b/i, docs: (d) => d.title === "CV: Experience", prefer: /built a controller|Recreated/ },
+  { name: "now", re: /\b(now|currently|moment|these days|working on|building|busy|lately|research|project)\b/i, docs: (d) => d.id === "about" || d.id === "lnn", prefer: /Now I'm|researching|investigat/ },
+  { name: "study", re: /\b(modules?|courses?|stud(y|ying|ies)|universit|degree|kcl|king'?s|education|classes)\b/i, docs: (d) => d.title === "CV: Education" },
+  { name: "skills", re: /\b(skills?|languages?|programming|code|coding|tools?|python|ros)\b/i, docs: (d) => d.title === "CV: Skills", prefer: /^(Programming|Robotics|Data)/ },
+  { name: "lead", re: /\b(lead(er|ership)?|society|societies|ibm|president|ambassador|volunteer|roles?)\b/i, docs: (d) => d.title === "CV: Leadership & Outreach", prefer: /President|Founder|Ambassador/ },
+  { name: "site", re: /\b(commands?|terminal|site|website|navigate|use this|get around)\b/i, docs: (d) => /README › Things to try/.test(d.title), prefer: /Get around|Reboot the computer/ },
+];
+// lines that don't read as speech: file trees, table headers, command rows
+const notSpeech = (l) => /[├└│]|^~\/|^Command: |^anmol@/.test(l);
+
+function liteReply(index, question, query, history) {
+  if (!tokens(question).filter((t) => !GENERIC.has(t)).length && GREETING.test(question.trim())) {
+    const bye = /thank|cheers|bye|see you/i.test(question);
+    return { text: bye ? `Thanks for stopping by! If you'd like to talk properly, email me at ${EMAIL}.` : "Hi! I'm Anmol, or at least the lite version of me. Ask me what I'm working on, about my internship, or what's fun to try on this site.", hits: [] };
+  }
+  // "commands" questions are about the terminal, even when they mention the arm
+  const intent = (/\bcommands?\b/i.test(question) && !/\barm|robot|controller\b/i.test(question) ? LITE_INTENTS.find((x) => x.name === "site") : null)
+    || LITE_INTENTS.find((x) => x.re.test(question)) || LITE_INTENTS.find((x) => x.re.test(query));
+  // "are you still an intern?" is a yes/no about dates, straight from the CV
+  if (intent?.name === "intern" && /\b(still|any ?more|now|currently)\b/i.test(question)) {
+    const exp = index.docs.find((d) => d.title === "CV: Experience");
+    const intern = exp?.text.match(/Robotics Intern \(from ([^)]+) to ([^)]+)\)/), now = exp?.text.match(/Visiting Student AI Researcher \(from ([^)]+) to now\)/);
+    if (intern && now) return { text: `Not any more: I was a Robotics Intern at Oxford Dynamics from ${intern[1]} to ${intern[2]}. Since ${now[1]} I've been a Visiting Student AI Researcher there.`, hits: [exp] };
+  }
+  const pool = intent ? index.docs.filter(intent.docs) : retrieve(index, query, 3).filter((d) => d.id !== "agent-readme");
+  const q = tokens(query);
+  q.slice().forEach((t) => { if (SYN[t]) q.push(...SYN[t]); });
+  const want = new Set(q), N = index.docs.length;
+  const idf = (t) => Math.log(1 + (N - (index.df.get(t) || 0) + 0.5) / ((index.df.get(t) || 0) + 0.5));
+  const said = history.filter((m) => m.role === "assistant").map((m) => m.content).join(" ");
+  const lines = pool.flatMap((d, rank) => d.text.split(/\n|(?<=[.!?])\s+(?=[A-Z])/).map((l, i) => ({ d, rank, i, l: l.trim() })))
+    .filter((x) => x.l.length > 25 && !notSpeech(x.l) && !said.includes(firstPerson(x.l, x.d.id === "cv-pdf")))
+    .map((x) => ({ ...x, score: [...new Set(tokens(x.l))].filter((t) => want.has(t)).reduce((a, t) => a + idf(t), 0) + (intent?.prefer?.test(x.l) ? 6 : 0) + (intent ? 1 : 0) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .sort((a, b) => a.rank - b.rank || a.i - b.i);
+  if (!lines.length) return { text: pool.length ? `That's everything I have on that here. Ask me something else, or email me at ${EMAIL}.` : IDK, hits: [] };
+  return { text: lines.map((x) => firstPerson(x.l, x.d.id === "cv-pdf")).join(" "), hits: [...new Set(lines.map((x) => x.d))] };
 }
 
 // ---------- answering ----------
 // make sure a model is loaded (asking which one the first time); false if there's nothing to answer with
 async function ensureModel(io, gpu, switching = false) {
-  if (askEngine && !switching) return true;
+  if ((askEngine || askLite) && !switching) return true;
   const model = await chooseModel(io, gpu);
   if (!model) { io.print('<span class="t-dim">Cancelled.</span>'); return false; }
   return loadModel(io, model);
@@ -244,6 +329,12 @@ async function answer(io, index, question, history = [], prefix = "") {
   // retrieve; a short follow-up ("tell me more") also searches with the previous question
   const last = history.length ? history[history.length - 2].content : "";
   const query = !specific.length && last ? `${question} ${last}` : question;
+  if (askLite) {
+    const lite = liteReply(index, question, query, history);
+    io.print(prefix + escapeHtml(lite.text));
+    printSources(io, lite.hits, lite.text);
+    return lite.text;
+  }
   const ranked = retrieve(index, query, 6);
   // for questions about work, the CV's experience section goes first: its dates keep the internship and the research role apart
   const anchor = ranked.find((d) => d.title === "CV: Experience");
@@ -276,22 +367,21 @@ async function answer(io, index, question, history = [], prefix = "") {
   }
   if (stopped) io.print('<span class="t-dim">(stopped)</span>');
 
-  // where the answer came from, clickable
+  printSources(io, hits, text);
+  return text;
+}
+
+// where an answer came from, clickable
+function printSources(io, hits, text) {
   const seen = new Set(), sources = hits.filter((d) => !seen.has(d.id) && seen.add(d.id));
   if (sources.length && text && !/(isn't|not) (something I've put )?on my site|not something I've put/i.test(text)) {
     io.print(`<span class="t-dim">from:</span> ${sources.map((d) => `<button type="button" class="t-src" data-open="${d.id}">${escapeHtml(d.label || FS[d.id].name)}</button>`).join("  ")}`);
   }
-  return text;
 }
 
-// no WebGPU: still show the most relevant parts of the site
-function answerWithoutGpu(io, index, question) {
-  const hits = retrieve(index, question, 2);
-  if (!hits.length) return io.print(`Nothing on the site matches that. You can ask me at <a href="mailto:${EMAIL}">${EMAIL}</a>.`);
-  io.print('<span class="t-dim">Your browser has no WebGPU, so there\'s no AI reply here. These are the parts of the site that match best:</span>\n');
-  hits.forEach((d) => io.print(`<span class="t-accent">${escapeHtml(d.title)}</span>\n${escapeHtml(d.text.slice(0, 420))}${d.text.length > 420 ? "…" : ""}\n`));
-}
-const disclaimer = () => `<span class="t-dim">anmol is an AI version of me running on your GPU (${escapeHtml(askModel.name)}). It only knows what's on this site and can make mistakes.</span>`;
+const disclaimer = () => askLite
+  ? '<span class="t-dim">Lite mode: these are lines from my site, not an AI model.</span>'
+  : `<span class="t-dim">anmol is an AI version of me running on your GPU (${escapeHtml(askModel.name)}). It only knows what's on this site and can make mistakes.</span>`;
 
 // ---------- the commands ----------
 // ask <question>: one question
@@ -307,7 +397,6 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
     return;
   }
   const index = await buildAskIndex(), gpu = await gpuInfo();
-  if (!gpu) return answerWithoutGpu(io, index, question);
   if (!(await ensureModel(io, gpu, switching)) || !question) return;
   await answer(io, index, question);
   io.print(disclaimer());
@@ -317,7 +406,7 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
 function agentIntro(io) {
   const head = [
     `<span class="t-banner t-banner--agent">${BANNER.join("\n")}</span>`,
-    `<span class="t-ok">●</span> <span class="t-accent">AI agent</span> <span class="t-dim">· runs on your GPU · knows my CV and this site</span>`,
+    `<span class="t-ok">●</span> <span class="t-accent">AI agent</span> <span class="t-dim">· runs in your browser · knows my CV and this site</span>`,
     `<span class="t-dim">${"─".repeat(mobile.matches ? 36 : 64)}</span>`,
     "Hi, I'm an AI version of Anmol. Ask me about my work, my studies, or anything you can do on this site.",
   ];
@@ -336,7 +425,7 @@ function agentIntro(io) {
     `  <span class="t-accent">TRY ASKING</span>`,
     ...ASK_EXAMPLES.map((q) => `  <span class="t-dim">›</span> <button type="button" class="t-cmd" data-cmd="${escapeHtml(q)}">${escapeHtml(q)}</button>`),
     "",
-    `  <span class="t-dim">● Private: I run on your GPU and nothing leaves this device. I only know this site, and I can make mistakes.</span>`,
+    `  <span class="t-dim">● Private: everything happens on this device and nothing is sent anywhere. I only know this site, and I can make mistakes.</span>`,
     `  <span class="t-dim">● Type <span class="t-accent">exit</span> or press Esc to leave.</span>`,
     "",
   ].join("\n"));
@@ -346,14 +435,12 @@ function agentIntro(io) {
 async function agentCommand(arg, io) {
   const index = await buildAskIndex(), gpu = await gpuInfo();
   agentIntro(io);
-  if (!gpu) io.print('<span class="t-dim">Your browser has no WebGPU, so I can\'t run here, but I can still show you the parts of the site that match your questions.</span>\n');
-  else if (!(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
+  if (!(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
   const history = [];
   for (;;) {
     const raw = (await io.read('you ›')).trim();
     if (!raw) continue;
     if (/^(exit|quit|bye|q|\u001b)$/i.test(raw)) break;
-    if (!gpu) { answerWithoutGpu(io, index, raw); continue; }
     const reply = await answer(io, index, raw, history, '<span class="t-ok">anmol ›</span> ');
     history.push({ role: "user", content: raw }, { role: "assistant", content: reply });
     if (history.length > 4) history.splice(0, 2); // remember the last two exchanges

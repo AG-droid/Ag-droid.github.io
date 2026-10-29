@@ -26,10 +26,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=32">
-  <script defer src="assets/js/arm.js?v=32"></script>
-  <script defer src="assets/js/ask.js?v=32"></script>
-  <script defer src="assets/js/main.js?v=32"></script>
+  <link rel="stylesheet" href="assets/css/style.css?v=33">
+  <script defer src="assets/js/arm.js?v=33"></script>
+  <script defer src="assets/js/ask.js?v=33"></script>
+  <script defer src="assets/js/main.js?v=33"></script>
 </head>
 <body>
   <!-- Boot screen (shown once per visit) -->
@@ -171,7 +171,7 @@
     <h2>Try it</h2>
     <ol>
       <li>Click <strong>Launch Agent</strong>, or type <code>agent</code> in any terminal on this site.</li>
-      <li>The first time, pick a model. It downloads once and your browser caches it for next time.</li>
+      <li>The first time, pick a model. It downloads once and your browser caches it for next time. On a phone, pick <strong>lite mode</strong> (the default there).</li>
       <li>Ask anything at <code>you ›</code>, like what I'm working on, what's fun to try on the site, or how this agent works. Follow-ups like "tell me more" work too.</li>
       <li>Type <code>exit</code> or press Esc to leave. For a single question, use <code>ask &lt;question&gt;</code> instead.</li>
     </ol>
@@ -195,12 +195,13 @@
     </ul>
 
     <h2>Choosing the models</h2>
-    <p>I tested six open models through whole conversations full of trick questions. Four made things up about me (for example, skills I've never listed, or that I'm still an intern) and were dropped: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. The two that stayed accurate are the ones you can pick: <strong>Llama 3.2 3B</strong> (1.8 GB, recommended) and <strong>Llama 3.1 8B</strong> (4.5 GB, the best answers on a strong GPU).</p>
+    <p>I tested six open models through whole conversations full of trick questions. Four made up facts about me that aren't on this site, so they were dropped: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. The two that stayed accurate are the ones you can pick: <strong>Llama 3.2 3B</strong> (1.8 GB, recommended) and <strong>Llama 3.1 8B</strong> (4.5 GB, the best answers on a strong GPU).</p>
 
     <h2>Privacy and limits</h2>
     <ul>
       <li>No server and no API key: your questions never leave your device. Only the model weights are downloaded, from Hugging Face.</li>
-      <li>It needs a browser with WebGPU (recent Chrome, Edge or Safari, and a decent GPU). Without it, the agent shows the parts of the site that match your question instead.</li>
+      <li>The AI models need a browser with WebGPU (recent Chrome, Edge or Safari) and a decent GPU. Phones don't give a browser tab enough memory for them: the tab gets closed and the page reloads. If that happens, the agent notices next time and suggests lite mode.</li>
+      <li><strong>Lite mode</strong> needs no download and works everywhere. Instead of a model, it works out what kind of question you asked and replies with the most relevant lines from my site and CV, turned into first person. It can't make anything up, but it can't rephrase or reason either.</li>
       <li>It's a small model, so it can still make mistakes. Check the sources, or email me.</li>
     </ul>
     <p class="note">Built with WebLLM (Apache-2.0) and Meta's Llama models.</p>
