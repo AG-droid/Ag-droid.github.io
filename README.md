@@ -62,7 +62,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
 | 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: `client.py` runs in its own terminal window and drives a real UR7e model in a WebGL viewer |
-| 🤖 **Ask me anything** | `ask <question>` in the terminal answers questions about me with a RAG pipeline that runs entirely on the visitor's GPU: they pick a model, it downloads once, and nothing leaves their device |
+| 🤖 **anmol, my AI agent** | Type `agent` in the terminal to chat with an AI version of me that answers in the first person from my site and CV. It's a RAG pipeline that runs entirely on the visitor's GPU: they pick a model, it downloads once, and nothing leaves their device |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
@@ -103,7 +103,8 @@ anmol@kcl:~$ help
 
 | Command | What it does |
 |---|---|
-| `ask <question>` | Ask anything about me; answered by an AI model on your own GPU |
+| `agent` | Chat with anmol, an AI version of me running on your GPU (`exit` or Esc to leave) |
+| `ask <question>` | Ask anmol a single question |
 | `research` | Open my current research on liquid neural networks |
 | `experience` | Open my experience |
 | `cv` | Open my CV |
@@ -147,13 +148,14 @@ There are also a couple of easter eggs. Try `sudo`.
 - **The window manager** handles stacking order, dragging with pointer events, minimise to the dock and maximise. Windows open in a slight cascade so they don't stack exactly on top of each other.
 - **The contact form** posts to [Web3Forms](https://web3forms.com) from the browser. The window closes as soon as you hit send, and a notification tracks the message. If sending fails, your draft is kept and you get a *Try again* button.
 - **The arm controller** opens two windows. The terminal runs a line-by-line JavaScript port of my ROS 2 `client.py`, with the same commands, prompts, messages and error handling. A small planner stands in for `motion_server.py` and MoveIt: a damped least-squares IK solver, Cartesian paths in 5 mm steps, and joint-space moves. The viewer draws the real UR7e meshes with a hand-written WebGL renderer, posed with the kinematic chain from the official URDF (`base_link` frame). The meshes come from [Universal Robots' ROS 2 description](https://github.com/UniversalRobots/Universal_Robots_ROS2_Description) (BSD-3-Clause, licence in `assets/models/ur7e/`), converted to a compact binary.
-- **`ask` is retrieval-augmented generation in the browser.** The site's documents (split at their headings) and the CV are indexed with BM25. A question pulls the best-matching passages, and a small open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers using only those passages and lists them as sources. Visitors choose the model (Llama 3.2 3B or Qwen2.5 1.5B). It downloads once and is cached by the browser, and nothing is sent to a server. Accuracy guardrails:
+- **`ask` is retrieval-augmented generation in the browser.** The site's documents (split at their headings) and the CV are indexed with BM25. A question pulls the best-matching passages, and a small open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers using only those passages and lists them as sources. It answers as me, in the first person, and `agent` keeps the last two exchanges so follow-ups like "tell me more" work. Visitors choose the model (Llama 3.2 3B or Llama 3.1 8B). It downloads once and is cached by the browser, and nothing is sent to a server. Accuracy guardrails:
   - Low temperature.
   - The rule "answer only from the context" is stated before and after the question.
   - The CV's experience section is included for work questions, so different roles don't get mixed up.
-  - If none of a question's specific words appear anywhere on the site, it answers "I don't know" without asking the model at all.
+  - If none of a question's specific words appear anywhere on the site, it says so without asking the model at all. Greetings, filler and time words ("hey", "at the moment") don't count as topics, so friendly questions still get answered.
+  - Today's date is given to the model, and date ranges are spelled out ("from June 2026 to September 2026") so it gets tenses right.
 
-  I tested candidate models against a set of trick questions and dropped the ones that made things up. Browsers without WebGPU get the matching passages instead.
+  I tested six candidate models through whole conversations and dropped the four that made things up: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. Browsers without WebGPU get the matching passages instead.
 - **Caching:** GitHub Pages caches pages for 10 minutes, so the CSS and JS are loaded with a `?v=N` query string. Bump `N` in `index.html` whenever they change.
 
 ### Adding something to the desktop

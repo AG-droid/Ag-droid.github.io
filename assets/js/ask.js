@@ -1,30 +1,36 @@
-// ===================== ask: questions about me, answered on your GPU =====================
+// ===================== anmol: an AI version of me, on your GPU =====================
 // A small RAG pipeline that runs entirely in the visitor's browser:
 //  1. retrieval: BM25 keyword search over the site's documents and my CV
-//  2. generation: a small open model run with WebLLM on WebGPU, told to answer only from what was retrieved
+//  2. generation: a small open model run with WebLLM on WebGPU, answering as me, only from what was retrieved
 // Nothing is sent to a server; the model is downloaded once and cached by the browser.
+// `agent` opens a chat with it; `ask <question>` asks a single question.
 
-// Models that held up in my accuracy checks; smaller ones made up facts about me
+// Models that held up in my accuracy checks over whole conversations; smaller ones made up facts about me
 const ASK_MODELS = [
-  { name: "Llama 3.2 3B", id: "Llama-3.2-3B-Instruct", size: "1.8 GB", note: "most accurate (recommended)", recommended: true },
-  { name: "Qwen2.5 1.5B", id: "Qwen2.5-1.5B-Instruct", size: "0.9 GB", note: "lighter and faster, slips up more often" },
+  { name: "Llama 3.2 3B", id: "Llama-3.2-3B-Instruct", size: "1.8 GB", note: "accurate and quick (recommended)", recommended: true },
+  { name: "Llama 3.1 8B", id: "Llama-3.1-8B-Instruct", size: "4.5 GB", note: "best answers, needs a strong GPU" },
 ];
 const ASK_EXAMPLES = [
-  "What did Anmol build at Oxford Dynamics?",
-  "What is Anmol researching?",
-  "Which programming languages does Anmol know?",
-  "How can I contact Anmol?",
+  "What are you working on at the moment?",
+  "What did you build at Oxford Dynamics?",
+  "Which programming languages do you know?",
+  "How can I get in touch?",
 ];
-const ASK_SYSTEM = `You answer questions from visitors to Anmol Goyal's personal website. The person asking is a visitor, not Anmol: never address them as Anmol, and "you" in a question means the visitor.
-The CONTEXT below comes from the website and CV. Text written in the first person ("I", "my") is Anmol writing about Anmol's own life. Never use pronouns for Anmol (no "I", "he", "his", "she", "her", "they"): repeat the name "Anmol" instead.
+const ASK_SYSTEM = `You are Anmol Goyal, chatting with a visitor on your personal website. Speak as Anmol, in the first person ("I", "my"), warmly and naturally.
+Your NOTES come from your website and CV. Notes that say "Anmol" are about you.
 Rules:
-- Use only facts stated in the CONTEXT. Never add, guess or embellish anything.
-- If the CONTEXT does not contain the answer, reply exactly: "I don't know that from Anmol's site. You can ask Anmol directly at anmol.goyal@kcl.ac.uk."
-- Answer in at most 4 short sentences of plain text, with no markdown and no lists.`;
+- For facts about yourself (work, studies, research, skills, dates, places, people), use only what the NOTES say. Never invent, guess or embellish.
+- Be friendly but factual: don't add feelings, opinions, hopes or plans that the NOTES don't mention.
+- Use the dates in the NOTES and today's date to get tenses right: something that has ended is in the past.
+- If the NOTES don't cover something, say honestly that it isn't on your site and suggest emailing anmol.goyal@kcl.ac.uk.
+- Greetings and small talk are fine: reply briefly and warmly, then offer to talk about your robotics work, research or studies.
+- The visitor is not Anmol. "You" in their message means you, Anmol.
+- Prefer the NOTES' own wording for facts and dates, and when asked for a list (modules, skills, roles), give all of it.
+- Keep replies to at most 3 short sentences of plain text, with no markdown and no lists.`;
 
-const IDK = "I don't know that from Anmol's site. You can ask Anmol directly at anmol.goyal@kcl.ac.uk.";
+const IDK = `That's not something I've put on my site, so I won't guess. Drop me an email at anmol.goyal@kcl.ac.uk and I'll tell you.`;
 // repeated after the question: small models follow what they read last
-const ASK_REMINDER = `Answer only that question, using only facts stated in the CONTEXT. Say "Anmol", not a pronoun, and never mention the word CONTEXT. Do not connect separate facts unless the CONTEXT connects them. If the CONTEXT doesn't answer it, reply exactly: "${IDK}"`;
+const ASK_REMINDER = `Reply as Anmol in the first person, using only facts from the NOTES. Don't connect separate facts unless the NOTES connect them, and never mention "NOTES". If the NOTES don't cover it, say it isn't on your site and suggest emailing anmol.goyal@kcl.ac.uk.`;
 
 // ---------- retrieval ----------
 const STOP = new Set("a an and are as at be by can did do does for from has have he her his how i in is it its me my of on or she that the their them they this to was what when where which who why will with you your about anmol anmols take takes taking took".split(" "));
@@ -35,13 +41,25 @@ const SYNONYMS = {
   contact: "email linkedin", reach: "contact email", email: "contact", hire: "contact email",
   research: "ltc liquid networks", project: "projects research", robot: "robotics arm", robotics: "robot arm ros",
   module: "modules education course", course: "modules education", class: "modules education", subject: "modules education",
+  now: "now current research", moment: "now current research", currently: "now current research", current: "now research", lately: "now research", recently: "now research",
+  building: "now research project", working: "now research project", busy: "now research",
 };
-// words that say what kind of question it is, rather than what it's about
-const GENERIC = new Set("know tell describe explain work worked working do did does done build built make made get got like use used using ever any much many good best kind sort thing things".split(" "));
 const stem = (w) => w.replace(/(ings|ing|ies|ied|es|s|ed)$/, (m) => (m === "ies" || m === "ied" ? "y" : "")) || w;
 const tokens = (text) => text.toLowerCase().replace(/[’']/g, "").split(/[^a-z0-9.+#]+/).map((w) => w.replace(/\.+$/, "")).filter((w) => w && !STOP.has(w)).map(stem);
+// words that say what kind of question it is, rather than what it's about
+const GENERIC = new Set(("know tell describe explain work worked working do did does done build built building make made get got like use used using ever any much many good best kind sort thing things " +
+  "now moment currently current lately recently today day days time these right still also more else again just really " +
+  "hi hey hello hiya yo sup thanks thank cheers please ok okay cool nice great awesome wow man mate buddy dude bro there doing going up how whats " +
+  "bye goodbye cya later soon morning afternoon evening night welcome sorry lol haha ha meet meeting pleasure appreciate chat talk").split(" ").map(stem));
 // synonyms keyed by their stem, so "modules" and "module" both expand
 const SYN = Object.fromEntries(Object.entries(SYNONYMS).map(([k, v]) => [stem(k), tokens(v)]));
+
+// "Jun – Sep 2026" -> "from June 2026 to September 2026": small models misread dash ranges
+const MONTHS = { Jan: "January", Feb: "February", Mar: "March", Apr: "April", Jun: "June", Jul: "July", Aug: "August", Sep: "September", Oct: "October", Nov: "November", Dec: "December" };
+const spellDates = (t) => t
+  .replace(/\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m) => MONTHS[m])
+  .replace(/\b([A-Z][a-z]+)( \d{4})? [–-] ([A-Z][a-z]+) (\d{4})/g, (m, a, y, b, y2) => `from ${a} ${(y || " " + y2).trim()} to ${b} ${y2}`)
+  .replace(/\b([A-Z][a-z]+ \d{4}) [–-] (now|Present)\b/g, "from $1 to now");
 
 let askIndex = null;
 async function buildAskIndex() {
@@ -51,7 +69,7 @@ async function buildAskIndex() {
   Object.keys(FS).filter((k) => FS[k].type === "doc").forEach((k) => {
     const root = $("#" + FS[k].tpl).content;
     let section = { title: FS[k].name, id: k, text: [] };
-    const flush = () => { if (section.text.length) docs.push({ ...section, text: section.text.join("\n") }); };
+    const flush = () => { if (section.text.length) docs.push({ ...section, text: spellDates(section.text.join("\n")) }); };
     const walk = (el) => {
       for (const c of el.children) {
         if (c.tagName === "H2" || c.tagName === "H3") { flush(); section = { title: `${FS[k].name} › ${c.textContent.trim()}`, id: k, text: [] }; }
@@ -136,7 +154,7 @@ async function chooseModel(io, gpu) {
     return `  <button type="button" class="t-cmd" data-cmd="${i + 1}">${i + 1}</button>  ${m.name.padEnd(14)}${m.size.padStart(7)}   <span class="t-dim">${m.note}</span>${have ? '  <span class="t-ok">✓ downloaded</span>' : ""}`;
   }).join("\n"));
   const raw = (await io.read(`model [1-${ASK_MODELS.length}, Enter = ${fallback}, n = cancel] &gt;`)).trim().toLowerCase();
-  if (raw === "n" || raw === "q") return null;
+  if (raw === "n" || raw === "q" || raw === "\u001b") return null;
   const pick = ASK_MODELS[(raw === "" ? fallback : parseInt(raw, 10)) - 1];
   if (!pick) { io.print('<span class="t-err">Not a model number.</span> Run <span class="t-accent">ask</span> again to choose.'); return null; }
   return { ...pick, full: variant(pick) };
@@ -168,69 +186,55 @@ async function loadModel(io, model) {
   }
 }
 
-// ---------- the command ----------
-async function askCommand(arg, io) {
-  let question = arg.trim();
-  const switching = /^--?model\b/.test(question);
-  if (switching) question = question.replace(/^--?model\s*/, "");
+// ---------- answering ----------
+// make sure a model is loaded (asking which one the first time); false if there's nothing to answer with
+async function ensureModel(io, gpu, switching = false) {
+  if (askEngine && !switching) return true;
+  const model = await chooseModel(io, gpu);
+  if (!model) { io.print('<span class="t-dim">Cancelled.</span>'); return false; }
+  return loadModel(io, model);
+}
 
-  if (!question && !switching) {
-    io.print(`<span class="t-accent">ask</span> answers questions about Anmol from this site and the CV, using an AI model on your own GPU.
-Try one:
-${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask ${escapeHtml(q)}">ask ${escapeHtml(q)}</button>`).join("\n")}
-<span class="t-dim">ask --model to change model.</span>`);
-    return;
-  }
-
-  const index = await buildAskIndex();
-  const gpu = await gpuInfo();
-  if (!gpu) {
-    // no WebGPU: still show the most relevant parts of the site
-    const hits = retrieve(index, question, 2);
-    if (!hits.length) return io.print(`Nothing on the site matches that. You can ask Anmol at <a href="mailto:${EMAIL}">${EMAIL}</a>.`);
-    io.print('<span class="t-dim">Your browser has no WebGPU, so there\'s no AI answer here. These are the parts of the site that match best:</span>\n');
-    hits.forEach((d) => io.print(`<span class="t-accent">${escapeHtml(d.title)}</span>\n${escapeHtml(d.text.slice(0, 420))}${d.text.length > 420 ? "…" : ""}\n`));
-    return;
-  }
-
-  if (!askEngine || switching) {
-    const model = await chooseModel(io, gpu);
-    if (!model) return io.print('<span class="t-dim">Cancelled.</span>');
-    if (!(await loadModel(io, model))) return;
-    if (!question) return;
-    io.print("");
-  }
-
-  // retrieve, then generate an answer grounded in what was retrieved
-  // if none of the question's specific words appear anywhere on the site, don't let the model guess
+// answer one message as me; `history` holds earlier turns of an agent chat
+async function answer(io, index, question, history = [], prefix = "") {
+  // if none of the message's specific words appear anywhere on the site, don't let the model guess
   const specific = tokens(question).filter((t) => !GENERIC.has(t));
   const onSite = (t) => index.df.has(t) || (SYN[t] || []).some((x) => index.df.has(x));
   if (specific.length && !specific.some(onSite)) {
-    io.print(IDK);
-    return;
+    io.print(prefix + escapeHtml(IDK));
+    return IDK;
   }
 
-  // for questions about work, the CV's experience section goes first: it keeps the internship and the research role apart
-  const ranked = retrieve(index, question, 6);
-  const anchor = ranked.find((d) => d.title === "CV: Experience");
-  const hits = ranked.filter((d) => d !== anchor).slice(0, 3);
-  const context = [anchor, ...hits].filter(Boolean).map((d, i) => `[${i + 1}] ${d.title}\n${d.text}`).join("\n\n");
+  // retrieve; a short follow-up ("tell me more") also searches with the previous question
+  const last = history.length ? history[history.length - 2].content : "";
+  const query = !specific.length && last ? `${question} ${last}` : question;
+  const ranked = retrieve(index, query, 6);
+  // the CV's experience section always goes first: its dates keep the internship and the research role apart
+  const anchor = index.docs.find((d) => d.title === "CV: Experience");
+  let hits = ranked.filter((d) => d !== anchor).slice(0, 3);
+  if (!hits.length) hits = index.docs.filter((d) => d.id === "about").slice(0, 1); // small talk: who I am
+  const notes = [anchor, ...hits].filter(Boolean).map((d, i) => `[${i + 1}] ${d.title}\n${d.text}`).join("\n\n");
+
   let text = "", stopped = false;
   const stop = () => { stopped = true; askEngine.interruptGenerate(); };
   io.busy(stop, false);
-  const out = io.el('<span class="t-dim">thinking…  (Esc or Ctrl+C to stop)</span>');
+  const out = io.el(prefix + '<span class="t-dim">thinking…  (Esc or Ctrl+C to stop)</span>');
   try {
     const stream = await askEngine.chat.completions.create({
-      messages: [{ role: "system", content: ASK_SYSTEM }, { role: "user", content: `CONTEXT:\n${context}\n\nQUESTION: ${question}\n\n${ASK_REMINDER}` }],
-      temperature: 0.1, top_p: 0.9, frequency_penalty: 0.3, max_tokens: 260, stream: true,
+      messages: [
+        { role: "system", content: `${ASK_SYSTEM}\nToday's date: ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.` },
+        ...history,
+        { role: "user", content: `NOTES:\n${notes}\n\nVISITOR: ${question}\n\n${ASK_REMINDER}` },
+      ],
+      temperature: 0.1, top_p: 0.9, max_tokens: 260, stream: true,
     });
     for await (const chunk of stream) {
       text += chunk.choices[0]?.delta?.content || "";
-      out.textContent = text.replace(/\*\*|__|^#+\s*/gm, "");
+      out.innerHTML = prefix + escapeHtml(text.replace(/\*\*|__|^#+\s*/gm, "").trim());
       io.scroll();
     }
   } catch (e) {
-    if (!stopped) out.innerHTML = `<span class="t-err">Something went wrong: ${escapeHtml(String(e.message || e).slice(0, 160))}</span>`;
+    if (!stopped) out.innerHTML = prefix + `<span class="t-err">Something went wrong: ${escapeHtml(String(e.message || e).slice(0, 160))}</span>`;
   } finally {
     io.busy(null);
   }
@@ -238,8 +242,59 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
 
   // where the answer came from, clickable
   const seen = new Set(), sources = hits.filter((d) => !seen.has(d.id) && seen.add(d.id));
-  if (sources.length && !/^I don't know/i.test(text.trim())) {
-    io.print(`<span class="t-dim">sources:</span> ${sources.map((d) => `<button type="button" class="t-cmd t-file" data-cmd="open ${d.id}">${escapeHtml(FS[d.id].name)}</button>`).join("  ")}`);
+  if (sources.length && text && !/(isn't|not) (something I've put )?on my site|not something I've put/i.test(text)) {
+    io.print(`<span class="t-dim">from:</span> ${sources.map((d) => `<button type="button" class="t-src" data-open="${d.id}">${escapeHtml(FS[d.id].name)}</button>`).join("  ")}`);
   }
-  io.print(`<span class="t-dim">${escapeHtml(askModel.name)} on your GPU · small models can make mistakes, so check the sources.</span>`);
+  return text;
+}
+
+// no WebGPU: still show the most relevant parts of the site
+function answerWithoutGpu(io, index, question) {
+  const hits = retrieve(index, question, 2);
+  if (!hits.length) return io.print(`Nothing on the site matches that. You can ask me at <a href="mailto:${EMAIL}">${EMAIL}</a>.`);
+  io.print('<span class="t-dim">Your browser has no WebGPU, so there\'s no AI reply here. These are the parts of the site that match best:</span>\n');
+  hits.forEach((d) => io.print(`<span class="t-accent">${escapeHtml(d.title)}</span>\n${escapeHtml(d.text.slice(0, 420))}${d.text.length > 420 ? "…" : ""}\n`));
+}
+const disclaimer = () => `<span class="t-dim">anmol is an AI version of me running on your GPU (${escapeHtml(askModel.name)}). It only knows what's on this site and can make mistakes.</span>`;
+
+// ---------- the commands ----------
+// ask <question>: one question
+async function askCommand(arg, io) {
+  let question = arg.trim();
+  const switching = /^--?model\b/.test(question);
+  if (switching) question = question.replace(/^--?model\s*/, "");
+  if (!question && !switching) {
+    io.print(`<span class="t-accent">ask</span> asks the AI version of me one question. For a conversation, type <button type="button" class="t-cmd" data-cmd="agent">agent</button>.
+Try one:
+${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask ${escapeHtml(q)}">ask ${escapeHtml(q)}</button>`).join("\n")}
+<span class="t-dim">ask --model to change model.</span>`);
+    return;
+  }
+  const index = await buildAskIndex(), gpu = await gpuInfo();
+  if (!gpu) return answerWithoutGpu(io, index, question);
+  if (!(await ensureModel(io, gpu, switching)) || !question) return;
+  await answer(io, index, question);
+  io.print(disclaimer());
+}
+
+// agent: chat with me until "exit"
+async function agentCommand(arg, io) {
+  const index = await buildAskIndex(), gpu = await gpuInfo();
+  io.print(`<span class="t-accent">anmol</span> · an AI version of me that answers from this site and my CV.
+<span class="t-dim">Ask me anything about my work, research or studies. Type <span class="t-accent">exit</span> (or press Esc) to leave.</span>
+`);
+  if (gpu && !(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
+  if (gpu) io.print(disclaimer() + "\n");
+  io.print(`<span class="t-dim">Not sure where to start?</span> ${ASK_EXAMPLES.slice(0, 2).map((q) => `<button type="button" class="t-cmd" data-cmd="${escapeHtml(q)}">${escapeHtml(q)}</button>`).join("  ")}`);
+  const history = [];
+  for (;;) {
+    const raw = (await io.read('you ›')).trim();
+    if (!raw) continue;
+    if (/^(exit|quit|bye|q|\u001b)$/i.test(raw)) break;
+    if (!gpu) { answerWithoutGpu(io, index, raw); continue; }
+    const reply = await answer(io, index, raw, history, '<span class="t-ok">anmol ›</span> ');
+    history.push({ role: "user", content: raw }, { role: "assistant", content: reply });
+    if (history.length > 4) history.splice(0, 2); // remember the last two exchanges
+  }
+  io.print('<span class="t-dim">Left the chat with anmol. Type</span> <button type="button" class="t-cmd" data-cmd="agent">agent</button> <span class="t-dim">to come back.</span>');
 }

@@ -399,7 +399,8 @@ function terminal(id, body) {
   cat &lt;file&gt;    read a file right here
   open &lt;name&gt;  open it in a window  <span class="t-dim">(open . for this folder)</span>
   ${cmd("pwd")}where am I?
-  ask &lt;question&gt; ask anything about me  <span class="t-dim">(AI on your GPU)</span>
+  ${cmd("agent")}chat with an AI version of me  <span class="t-dim">(runs on your GPU)</span>
+  ask &lt;question&gt; ask it a single question
   ${cmd("research")}what I'm working on now
   ${cmd("controller")}drive my robot arm controller
   ${cmd("experience")}where I've worked
@@ -466,6 +467,7 @@ function terminal(id, body) {
     clear: () => { out.innerHTML = ""; },
     sudo: () => print('<span class="t-err">anmol is not in the sudoers file. This incident will be reported.</span>'),
     ask: (arg) => askCommand(arg, io),
+    agent: (arg) => agentCommand(arg, io),
     controller: () => commands.open("arm-app"),
     ros2: () => commands.open("arm-app"),
     exit: () => close(id),
@@ -484,7 +486,7 @@ function terminal(id, body) {
       $(".term__prompt", line).outerHTML = prompt();
       const echoed = document.createElement("span");
       echoed.innerHTML = reply.label + " ";
-      echoed.append(document.createTextNode(raw + "\n"));
+      echoed.append(document.createTextNode((raw === "\u001b" ? "" : raw) + "\n"));
       out.append(echoed);
       reply.resolve(raw);
       return;
@@ -499,7 +501,9 @@ function terminal(id, body) {
   };
 
   document.addEventListener("keydown", (e) => {
-    if (interrupt && body.isConnected && !body.closest(".is-inactive") && (e.key === "Escape" || (e.key === "c" && e.ctrlKey))) { e.preventDefault(); interrupt(); }
+    if (!body.isConnected || body.closest(".is-inactive")) return;
+    if (interrupt && (e.key === "Escape" || (e.key === "c" && e.ctrlKey))) { e.preventDefault(); interrupt(); }
+    else if (waiting && e.key === "Escape") { e.preventDefault(); run("\u001b"); } // leave a prompt (agent chat, model picker)
   });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
@@ -586,7 +590,7 @@ function welcome(print, cmd) {
     `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
     `  <span class="t-ok">✓</span> or stay right here and run a command:`,
     "",
-    `      ${cmd("ask")}ask anything about me (AI on your GPU)`,
+    `      ${cmd("agent")}chat with an AI version of me (runs on your GPU)`,
     `      ${cmd("research")}what I'm working on now`,
     `      ${cmd("experience")}where I've worked`,
     `      ${cmd("cv")}open my CV`,
