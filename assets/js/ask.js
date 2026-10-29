@@ -187,10 +187,11 @@ const PINNED = {
   "Llama-3.1-8B-Instruct-q4f16_1-MLC": { rev: "ac109a0e5f6dc3c2f4fbe02c20192f9f4665900d", lib: "Llama-3_1-8B-Instruct-q4f16_1_cs1k-webgpu.wasm", sri: "sha384-on8RIXJNbg8M10Gkpxd9BMENBzUPDmROIDRX0dvqsjAN9Qej1t2/BjTfch1ysdcD" },
   "Llama-3.1-8B-Instruct-q4f32_1-MLC": { rev: "3ac29bcbc3cae42adce3a2928726f51fecbdbd08", lib: "Llama-3_1-8B-Instruct-q4f32_1_cs1k-webgpu.wasm", sri: "sha384-OBsd4IxXArwQ7+CcMSw4zt5XPCip3DXm8jLr+Zcnf58l7fQ1EEIpdZag8G+vZ9iW" },
 };
+const pinnedUrl = (id) => `https://huggingface.co/mlc-ai/${id}/resolve/${PINNED[id].rev}/`;
 function pinnedConfig(lib, id) {
   const pin = PINNED[id], base = lib.prebuiltAppConfig.model_list.find((m) => m.model_id === id);
   if (!pin || !base) throw new Error(`${id} isn't a pinned model`);
-  const record = { ...base, model: `https://huggingface.co/mlc-ai/${id}/resolve/${pin.rev}/`, model_lib: PIN_LIBS + pin.lib, integrity: { model_lib: pin.sri } };
+  const record = { ...base, model: pinnedUrl(id), model_lib: PIN_LIBS + pin.lib, integrity: { model_lib: pin.sri } };
   return { ...lib.prebuiltAppConfig, model_list: [record] };
 } // set while a model loads; still there on the next visit if loading crashed the page
 
@@ -201,6 +202,20 @@ async function gpuInfo() {
   } catch (e) { return null; }
 }
 // WebLLM keeps downloaded models in the Cache API; peek without loading the library
+// Free browser storage for a download: drop cached files that aren't one of the pinned
+// versions (older copies from before pinning), and if that's not enough, every model but this one
+const CACHES = ["webllm/config", "webllm/model", "webllm/wasm"];
+async function pruneCache(keep) {
+  const wanted = (url) => url.startsWith(PIN_LIBS + (keep ? PINNED[keep].lib : "")) || (keep ? url.startsWith(pinnedUrl(keep)) : Object.keys(PINNED).some((id) => url.startsWith(pinnedUrl(id))));
+  try {
+    for (const name of CACHES) {
+      const cache = await caches.open(name);
+      for (const req of await cache.keys()) if (!wanted(req.url)) await cache.delete(req);
+    }
+  } catch (e) { /* storage unavailable */ }
+}
+const isQuota = (e) => e && (e.name === "QuotaExceededError" || /quota/i.test(e.message || ""));
+
 async function cachedModels() {
   try {
     const keys = await (await caches.open("webllm/config")).keys();
@@ -226,7 +241,7 @@ async function chooseModel(io, gpu) {
   const fallback = crashed || phone ? options.length : options.findIndex((m) => m.id === last) + 1 || options.findIndex((m) => m.recommended) + 1;
   io.print(`<span class="t-accent">Pick a model</span> <span class="t-dim">to run on your GPU. It's downloaded once, then cached by your browser.</span>`);
   io.print(options.map((m, i) => {
-    const have = !m.lite && cached.some((u) => u.includes(variant(m)));
+    const have = !m.lite && cached.some((u) => u.startsWith(pinnedUrl(variant(m))));
     const note = m.lite ? m.note : phone ? `${m.note}; may not fit in a phone's memory` : m.note;
     return `  <button type="button" class="t-cmd" data-cmd="${i + 1}">${i + 1}</button>  ${m.name.padEnd(14)}${m.size.padStart(7)}   <span class="t-dim">${note}</span>${have ? '  <span class="t-ok">✓ downloaded</span>' : ""}`;
   }).join("\n"));
@@ -251,7 +266,7 @@ async function loadModel(io, model) {
   try {
     const lib = await loadWebllm();
     if (askEngine) { await askEngine.unload(); askEngine = null; }
-    askEngine = await lib.CreateMLCEngine(model.full, {
+    const create = () => lib.CreateMLCEngine(model.full, {
       appConfig: pinnedConfig(lib, model.full),
       initProgressCallback: (r) => {
         const pct = Math.round((r.progress || 0) * 100), filled = Math.round(pct / 5);
@@ -259,6 +274,13 @@ async function loadModel(io, model) {
         io.scroll();
       },
     });
+    await pruneCache();
+    try { askEngine = await create(); } catch (e) {
+      if (!isQuota(e)) throw e;
+      // still no room: make space by removing the other model, then carry on
+      await pruneCache(model.full);
+      askEngine = await create();
+    }
     askModel = model;
     askLite = false;
     try { localStorage.setItem("ask-model", model.id); } catch (e) { /* storage unavailable */ }
@@ -266,7 +288,7 @@ async function loadModel(io, model) {
     return true;
   } catch (e) {
     askEngine = null;
-    bar.innerHTML = `<span class="t-err">Couldn't load ${model.name}: ${escapeHtml(String(e.message || e).split("\n")[0].slice(0, 160))}</span>\n<span class="t-dim">Run</span> <span class="t-accent">agent --model</span> <span class="t-dim">and pick lite mode or another model.</span>`;
+    bar.innerHTML = `<span class="t-err">Couldn't load ${model.name}: ${isQuota(e) ? "your browser doesn't have enough free storage for it" : escapeHtml(String(e.message || e).split("\n")[0].slice(0, 160)).replace(/\.$/, "")}.</span>\n<span class="t-dim">Run</span> <span class="t-accent">agent --model</span> <span class="t-dim">and pick lite mode or another model.</span>`;
     return false;
   } finally {
     try { localStorage.removeItem(CRASH_KEY); } catch (e) { /* storage unavailable */ }
