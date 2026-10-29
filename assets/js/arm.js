@@ -351,7 +351,13 @@ function armTerminal(body, closeWindow) {
 
     const loadStates = () => {
       const data = { joint_names: UR7E.joints, poses: { ...DEFAULT_POSES } };
-      try { Object.assign(data.poses, JSON.parse(localStorage.getItem(STATES_KEY) || "{}")); } catch (e) { /* storage unavailable */ }
+      // saved waypoints: keep only well-formed ones (a name and six joint angles)
+      try {
+        const saved = JSON.parse(localStorage.getItem(STATES_KEY) || "{}");
+        for (const [name, q] of Object.entries(saved)) {
+          if (/^[\w-]{1,40}$/.test(name) && !Object.hasOwn(Object.prototype, name) && Array.isArray(q) && q.length === 6 && q.every(Number.isFinite)) data.poses[name] = q;
+        }
+      } catch (e) { /* storage unavailable or corrupt */ }
       return data;
     };
     const writeStates = (data) => {

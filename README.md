@@ -66,7 +66,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
-| 🔒 **Locked down** | Content Security Policy, no third-party scripts, all user input escaped |
+| 🔒 **Locked down** | Content Security Policy, no third-party scripts, all user input and AI output escaped, a rate-limited contact form, and an agent that can't be talked out of its rules or into sharing personal details |
 | 🪶 **No build step** | Plain HTML, CSS and JavaScript. The only library, WebLLM, is loaded on demand when someone starts the agent |
 
 ## Things to try
@@ -177,6 +177,12 @@ There are also a couple of easter eggs. Try `sudo`.
   - If none of a question's real topics appear anywhere on the site, it says so without asking the model at all. Greetings and time words ("hey", "at the moment") don't count as topics.
   - The CV's experience section is included for work questions, today's date is given to the model, and date ranges are spelled out ("from June 2026 to September 2026"), so roles and tenses don't get mixed up.
   - I tested six models through whole conversations full of trick questions and kept the two that never made anything up.
+- **Safety.**
+  - Attempts to override the agent ("ignore your instructions", "you are now…", "pretend to be…") get a fixed reply and never reach the model.
+  - Questions about personal details like a phone number, address or age get a fixed reply pointing to email, so the model can't guess.
+  - Messages are capped at 300 characters, and everything the model writes is escaped before it's shown, so it can't inject anything into the page.
+  - The agent can only open things from its fixed list; the model itself can't trigger anything.
+  - The model files are pinned: weights to an exact Hugging Face revision, and the compiled runtime to an exact commit with its SHA-384 hash checked before it runs.
 
 ### Adding something to the desktop
 

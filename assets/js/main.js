@@ -669,7 +669,7 @@ function compose(body, id) {
   body.innerHTML = `
     <form class="compose" novalidate>
       <div class="compose__row"><span>To</span><input class="compose__to" value="${EMAIL}" readonly aria-label="Recipient"><button type="button" class="compose__copy">Copy</button></div>
-      <label class="compose__row"><span>From</span><input name="email" type="email" placeholder="your@email.com" autocomplete="email" required></label>
+      <label class="compose__row"><span>From</span><input name="email" type="email" placeholder="your@email.com" autocomplete="email" required maxlength="254"></label>
       <label class="compose__row"><span>Subject</span><input name="subject" placeholder="Hello from your website" maxlength="150"></label>
       <textarea name="message" placeholder="Write your message..." required maxlength="5000"></textarea>
       <input class="compose__trap" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -692,6 +692,9 @@ function compose(body, id) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setStatus("Please enter a valid email address.", "error"); form.email.focus(); return; }
     if (!message) { setStatus("Please write a message.", "error"); form.message.focus(); return; }
     if (form._honey.value) return;
+    // one message a minute, so a script can't flood the inbox through this form
+    const wait = Math.ceil((lastSent + 60000 - Date.now()) / 1000);
+    if (wait > 0) { setStatus(`You just sent one! You can send another in ${wait}s.`, "error"); return; }
 
     // Send in the background so the visitor can carry on browsing
     close(id);
@@ -712,7 +715,9 @@ function copyEmail(btn) {
   navigator.clipboard ? navigator.clipboard.writeText(EMAIL).then(done, fallback) : fallback();
 }
 
+let lastSent = 0;
 async function sendMessage({ email, subject, message }) {
+  lastSent = Date.now();
   const pending = notify("sending", "Sending your message…", "It's on the way. Feel free to keep exploring.");
   try {
     const res = await fetch(FORM_ENDPOINT, {
