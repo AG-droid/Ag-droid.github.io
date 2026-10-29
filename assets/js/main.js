@@ -23,11 +23,12 @@ const FS = {
   lnn:           { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 660, h: 640 },
   reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
 
-  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm-app", "arm-md"] },
-  "arm-app":     { name: "Arm Controller", type: "app", opens: ["arm-sim", "arm-term"] },
-  "arm-sim":     { name: "UR7e Simulation", type: "armview", w: 620, h: 560 },
-  "arm-term":    { name: "Terminal: client.py", type: "armterm", w: 680, h: 560 },
-  "arm-md":      { name: "Arm Controller.md", type: "doc", tpl: "doc-arm", w: 660, h: 640 },
+  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm"] },
+  arm:           { name: "Arm Controller", type: "folder", glyph: "arm", children: ["arm-app", "arm-readme"] },
+  "arm-app":     { name: "Launch Controller", type: "app", opens: ["arm-sim", "arm-term"] },
+  "arm-sim":     { name: "UR7e Simulation", type: "armview", w: 600, h: 640 },
+  "arm-term":    { name: "Terminal: client.py", type: "armterm", w: 740, h: 640 },
+  "arm-readme":  { name: "README.md", type: "doc", tpl: "doc-arm", w: 680, h: 660 },
 
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
   "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=6", w: 760, h: 720 },
@@ -67,6 +68,7 @@ const GLYPHS = {
   leadership: '<rect x="29" y="30" width="6" height="11" rx="3"/><path d="M25 38a7 7 0 0 0 14 0M32 45v3"/>',
   cv: '<circle cx="32" cy="35" r="4"/><path d="M24 48a8 7 0 0 1 16 0"/>',
   projects: '<path d="M27 33l-6 6 6 6M37 33l6 6-6 6"/>',
+  arm: '<path d="M24 48h12M28 48v-6l7-7 6 4"/><circle cx="35" cy="35" r="1.6"/><path d="M41 39v4"/>',
 };
 function iconArt(id) {
   const item = FS[id];
@@ -537,13 +539,15 @@ function welcome(print, cmd) {
     `<span class="t-dim">▸</span> Visiting Student AI Researcher @ Oxford Dynamics`,
     `<span class="t-dim">▸</span> Into robotics, physical AI and liquid neural networks`,
     "",
+    `<span class="t-ok">★ Try this:</span> drive the UR7e robot arm controller I wrote at Oxford Dynamics,`,
+    `  running live in your browser → ${cmd("controller", 0)}`,
+    "",
     `This site works like a little computer. You can:`,
     `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, Projects, CV`,
     `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
     `  <span class="t-ok">✓</span> or stay right here and run a command:`,
     "",
     `      ${cmd("research")}what I'm working on now`,
-    `      ${cmd("controller")}drive my robot arm in your browser`,
     `      ${cmd("experience")}where I've worked`,
     `      ${cmd("cv")}open my CV`,
     `      ${cmd("email")}send me a message`,

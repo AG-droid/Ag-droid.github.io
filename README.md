@@ -85,8 +85,9 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 │   ├── Liquid Neural Networks.md
 │   └── Reading List.txt
 ├── Projects/
-│   ├── Arm Controller     (app: client.py in a terminal + the UR7e in a 3D viewer)
-│   └── Arm Controller.md
+│   └── Arm Controller/
+│       ├── Launch Controller   (client.py in a terminal + the UR7e in a 3D viewer)
+│       └── README.md           how to drive the arm
 ├── CV/
 │   └── Anmol_Goyal_CV.pdf
 ├── Contact/           → Contact.md, Email, LinkedIn, GitHub, Site Source

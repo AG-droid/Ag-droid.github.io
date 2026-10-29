@@ -266,7 +266,7 @@ const pyStr = (x) => (Number.isInteger(x) ? x.toFixed(1) : String(x)); // str(fl
 const HELP_JSON = {
   help: ["To list every command --> help", "To show the format for one command --> help <command>"],
   move: ["To move around the cartesian plane --> move <x/y/z> <mm>", "To rotate the end effector --> move <rx/ry/rz> <degrees>"],
-  mode: ["To set the movement mode --> mode <l/g><j/c> (l = local tool frame, g = global base frame, j = joint space, c = cartesian)"],
+  mode: ["To set the movement mode --> mode <l/g><j/c>", "l = local (tool frame), g = global (base frame)", "j = joint space, c = cartesian (straight line)"],
   save: ["To save the current pose as a waypoint --> save <name>"],
   list_states: ["To list the saved waypoints --> list_states"],
   list_trajectories: ["To list the saved trajectories --> list_trajectories"],
@@ -301,10 +301,12 @@ function armTerminal(body, closeWindow) {
     error: (m) => write(`<span class="t-err">[ERROR] [${stamp()}] [${node}]: ${escapeHtml(m)}</span>`),
   });
 
-  // input(): resolves with the next line typed
+  // input(): resolves with the next line typed (or with `typed`, entered for the user)
   const history = [];
   let hIndex = 0, pending = null;
-  const read = (promptHtml) => new Promise((resolve) => {
+  const read = (promptHtml, typed) => typed !== undefined
+    ? new Promise((resolve) => { write(promptHtml + escapeHtml(typed)); setTimeout(() => resolve(typed), 400); })
+    : new Promise((resolve) => {
     promptEl.innerHTML = promptHtml;
     line.hidden = false;
     pending = resolve;
@@ -328,7 +330,7 @@ function armTerminal(body, closeWindow) {
   const shellPrompt = `<span class="term__prompt">${SHELL}</span> `;
   async function shell() {
     write(shellPrompt + "python3 client.py");
-    await client();
+    await client(true);
     for (;;) {
       const cmd = (await read(shellPrompt)).trim();
       if (!body.isConnected) return;
@@ -342,7 +344,8 @@ function armTerminal(body, closeWindow) {
   }
 
   // ===== client.py =====
-  async function client() {
+  // showHelp: type "help" at the first prompt, so new users see the commands straight away
+  async function client(showHelp = false) {
     const log = logger("user_interaction_node"), serverLog = logger("motion_planner_and_executor_node").info;
     const node = { is_local: false, JointSpace: false };
 
@@ -456,7 +459,8 @@ function armTerminal(body, closeWindow) {
       try {
         for (;;) {
           print(`Moving in ${node.is_local ? "local" : "global"} with ${node.JointSpace ? "Joint Space" : "Cartesian"} movement (units being used : mm & angles)`);
-          const ask = (await read("Enter Command --> ")).toLowerCase();
+          const ask = (await read("Enter Command --> ", showHelp ? "help" : undefined)).toLowerCase();
+          showHelp = false;
           if (!body.isConnected) return;
           const message = ask.split(" ");
 

@@ -26,9 +26,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=28">
-  <script defer src="assets/js/arm.js?v=28"></script>
-  <script defer src="assets/js/main.js?v=28"></script>
+  <link rel="stylesheet" href="assets/css/style.css?v=29">
+  <script defer src="assets/js/arm.js?v=29"></script>
+  <script defer src="assets/js/main.js?v=29"></script>
 </head>
 <body>
   <!-- Boot screen (shown once per visit) -->
@@ -110,25 +110,55 @@
   </template>
 
   <template id="doc-arm">
-    <p class="kicker">Project · Oxford Dynamics internship · 2026</p>
+    <p class="kicker">Projects / Arm Controller / README.md</p>
     <h1>Arm Controller</h1>
-    <p class="lead">The command-line controller I wrote in Python for a UR7e arm, on ROS 2 and MoveIt. Here it runs in your browser and drives a simulated UR7e.</p>
-    <p><button class="btn btn--primary" type="button" data-open="arm-app">Launch Arm Controller</button></p>
-    <p>It opens two windows: a terminal running <code>client.py</code>, and the arm. Type commands at <code>Enter Command --&gt;</code> and watch it move.</p>
-    <h2>Commands</h2>
+    <p class="lead">Drive a UR7e robot arm from the command line, with the controller I wrote in Python on ROS 2 and MoveIt during my internship at Oxford Dynamics. Here it runs in your browser and moves a simulated UR7e.</p>
+    <p><button class="btn btn--primary" type="button" data-open="arm-app">Launch Controller</button></p>
+
+    <h2>Quick start</h2>
+    <ol>
+      <li>Click <strong>Launch Controller</strong>. Two windows open: a terminal running <code>client.py</code>, and the arm.</li>
+      <li>The command list prints straight away. Type at <code>Enter Command --&gt;</code> and press Enter.</li>
+      <li>Try <code>move z 100</code> to lift the tool 10 cm, then <code>move x -150</code>, then <code>home</code> to go back.</li>
+      <li>Then run the demo: type <code>pick_and_place</code> while the arm is at <code>home</code>.</li>
+    </ol>
+
+    <h2>Moving the arm</h2>
     <ul>
-      <li><code>move x 100</code>, <code>move y -50</code>, <code>move z 80</code>: move the tool in millimetres.</li>
-      <li><code>move rx 30</code>, <code>move ry -20</code>, <code>move rz 45</code>: rotate the tool about its own axes, in degrees.</li>
-      <li><code>mode gc</code>, <code>mode gj</code>, <code>mode lc</code>, <code>mode lj</code>: measure moves in the base frame (g) or the tool frame (l), and plan them as a straight line for the tool (c) or as a joint-space move (j).</li>
-      <li><code>save &lt;name&gt;</code>: save the current joint angles as a waypoint. Type a waypoint's name to go back to it, and <code>list_states</code> to see them all.</li>
-      <li><code>pick_and_place</code>: run a saved trajectory. It only starts from its first waypoint, <code>home</code>. <code>list_trajectories</code> lists them.</li>
-      <li><code>help</code>, <code>help &lt;command&gt;</code> and <code>q</code> to quit.</li>
+      <li><code>move x 100</code>, <code>move y -50</code>, <code>move z 80</code>: move the tool along an axis, in <strong>millimetres</strong>.</li>
+      <li><code>move rx 30</code>, <code>move ry -20</code>, <code>move rz 45</code>: rotate the tool about its own axes, in <strong>degrees</strong>.</li>
     </ul>
-    <p>If a straight-line move fails partway, for example near a singularity or at the table, it offers to reach the same target with a joint-space move instead.</p>
-    <h2>How the real one is built</h2>
+    <p>Linear moves are measured from the robot's base unless you switch to the tool frame (see modes). In the base frame, <code>x</code> points forward from the robot, <code>y</code> to its left and <code>z</code> up.</p>
+
+    <h2>Modes</h2>
+    <p><code>mode</code> takes two letters. The line above every prompt tells you which mode you're in.</p>
+    <ul>
+      <li>First letter: <code>g</code> (global) measures moves in the base frame, <code>l</code> (local) in the tool's own frame.</li>
+      <li>Second letter: <code>c</code> (Cartesian) moves the tool in a straight line, <code>j</code> (joint space) moves all six joints together to the same target, so the tool's path may curve.</li>
+      <li>So <code>mode gc</code> is the default, and <code>mode lj</code> is local plus joint space.</li>
+    </ul>
+    <p>If a straight-line move can't be completed, for example because it would hit the table or pass through a singularity, the controller asks <code>Try via joint states instead? (y/n)</code>. Answer <code>y</code> to reach the same target with a joint-space move.</p>
+
+    <h2>Waypoints and trajectories</h2>
+    <ul>
+      <li><code>save my_pose</code>: save where the arm is now as a waypoint. Saved waypoints stay in your browser.</li>
+      <li><code>my_pose</code>: type a waypoint's name to move back to it. Built in: <code>home</code>, <code>pick_above</code>, <code>pick</code>, <code>place_above</code>, <code>place</code>.</li>
+      <li><code>list_states</code>: list every waypoint.</li>
+      <li><code>pick_and_place</code>: run a trajectory, a sequence of waypoints. A trajectory only starts if the arm is already at its first waypoint, so type <code>home</code> first if it refuses.</li>
+      <li><code>list_trajectories</code>: list every trajectory.</li>
+    </ul>
+
+    <h2>Everything else</h2>
+    <ul>
+      <li><code>help</code> lists the commands, and <code>help move</code> shows one.</li>
+      <li><code>q</code> quits the controller. Run <code>python3 client.py</code> at the shell prompt to start it again, or <code>exit</code> to close the terminal.</li>
+      <li>If you mistype, you'll see <code>Invalid input/ Wrong input format</code> and <code>Would you like to try again? (y/n)</code>. Answer <code>y</code> to carry on.</li>
+      <li>In the arm window, drag to orbit, scroll to zoom and double-click to reset the view. The blue line is the path the tool has travelled.</li>
+    </ul>
+
+    <h2>How the real one works</h2>
     <p>Two ROS 2 nodes. The client node reads commands, manages waypoints and reads the live <code>/joint_states</code> topic. The planner node holds the Cartesian and joint-space planners and executes the paths through MoveIt. Both run on a <code>MultiThreadedExecutor</code> in a background thread, so the blocking command prompt and live ROS communication can run at the same time.</p>
-    <h2>What's different in the browser</h2>
-    <p>There's no ROS here. The terminal runs a line-by-line JavaScript port of <code>client.py</code>. A damped least-squares IK solver and simple Cartesian and joint-space planners stand in for MoveIt, and the only collisions checked are with the table and the robot's base. The arm is the UR7e model from Universal Robots' official ROS 2 description (BSD-3-Clause), rendered with WebGL.</p>
+    <p class="note">In the browser there's no ROS. The terminal runs a line-by-line JavaScript port of <code>client.py</code>, a small IK solver and planner stand in for MoveIt, and the only collisions checked are with the table and the robot's base. The arm is the UR7e model from Universal Robots' ROS 2 description (BSD-3-Clause).</p>
   </template>
 
   <template id="doc-reading">
