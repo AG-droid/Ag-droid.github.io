@@ -62,17 +62,17 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
 | 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: `client.py` runs in its own terminal window and drives a real UR7e model in a WebGL viewer |
-| 🤖 **anmol, my AI agent** | Type `agent` in the terminal, or open Projects → Anmol Agent, to chat with an AI version of me that answers in the first person from my site and CV. It's a RAG pipeline that runs entirely on the visitor's GPU: they pick a model, it downloads once, and nothing leaves their device |
+| 🤖 **anmol, my AI agent** | Type `agent` in the terminal, or open Projects → Anmol Agent, to chat with an AI version of me. It answers in the first person from my site, this README and my CV, and offers to open things for you ("show me your CV" → "Want me to open it?"). It runs entirely in the visitor's browser, on their GPU, and nothing leaves their device |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
 | 🔒 **Locked down** | Content Security Policy, no third-party scripts, all user input escaped |
-| 🪶 **No build step** | Plain HTML, CSS and JavaScript. The only library, WebLLM, is loaded on demand when someone uses `ask` |
+| 🪶 **No build step** | Plain HTML, CSS and JavaScript. The only library, WebLLM, is loaded on demand when someone starts the agent |
 
 ## Things to try
 
 - **Drive a real robot arm.** Open Projects → Arm Controller → Launch Controller, or type `controller` in the terminal. A terminal runs a port of the ROS 2 controller I wrote during my internship, and a 3D UR7e arm moves as you type commands like `move z 100` or `pick_and_place`.
-- **Chat with me.** Type `agent` in the terminal, or open Projects → Anmol Agent → Launch Agent. It's an AI version of me that runs on your own GPU and answers from my site and CV.
+- **Chat with me.** Type `agent` in the terminal, or open Projects → Anmol Agent → Launch Agent. It's an AI version of me that knows my site and CV, so ask it what I'm working on or what's fun to try here. Say "show me your CV" or "how do I contact you?" and it offers to open the right thing on screen. On a phone, pick lite mode.
 - **Get around like a real terminal.** `cd Experience`, `ls`, `cat "About Me.txt"`, `open .` and Tab completion all work, and everything `ls` prints is clickable.
 - **Reboot the computer.** Type `reboot` to watch every app close, the system shut down and boot back up.
 - **Find the easter eggs.** Try `sudo`, `neofetch` or `whoami`.
@@ -116,7 +116,7 @@ anmol@kcl:~$ help
 
 | Command | What it does |
 |---|---|
-| `agent` | Chat with anmol, an AI version of me running on your GPU (`exit` or Esc to leave) |
+| `agent` | Chat with anmol, an AI version of me that can also open things for you (`exit` or Esc to leave) |
 | `ask <question>` | Ask anmol a single question |
 | `research` | Open my current research on liquid neural networks |
 | `experience` | Open my experience |
@@ -142,9 +142,9 @@ There are also a couple of easter eggs. Try `sudo`.
 ├── assets/
 │   ├── css/style.css        windows, dock, terminal, notifications, light/dark + mobile layouts
 │   ├── js/main.js           file system, window manager, terminal, contact form, boot screen
-│   ├── js/ask.js            ask: BM25 retrieval over the site + CV, WebLLM generation on WebGPU
-│   ├── js/vendor/           WebLLM 0.2.86 (Apache-2.0), loaded only when ask runs
-│   ├── data/cv.json         CV text as passages for ask
+│   ├── js/ask.js            the agent: retrieval, model or lite-mode replies, actions
+│   ├── js/vendor/           WebLLM 0.2.86 (Apache-2.0), loaded only when the agent loads a model
+│   ├── data/cv.json         CV text as passages for the agent (regenerate when the CV changes)
 │   ├── js/arm.js            arm controller: client.py port, UR7e kinematics, IK + planners, WebGL viewer
 │   ├── models/ur7e/         UR7e meshes converted from Universal Robots' ROS 2 description (BSD-3-Clause)
 │   ├── img/                 wallpaper, Oxford Dynamics and event photos
@@ -161,15 +161,22 @@ There are also a couple of easter eggs. Try `sudo`.
 - **The window manager** handles stacking order, dragging with pointer events, minimise to the dock and maximise. Windows open in a slight cascade so they don't stack exactly on top of each other.
 - **The contact form** posts to [Web3Forms](https://web3forms.com) from the browser. The window closes as soon as you hit send, and a notification tracks the message. If sending fails, your draft is kept and you get a *Try again* button.
 - **The arm controller** opens two windows. The terminal runs a line-by-line JavaScript port of my ROS 2 `client.py`, with the same commands, prompts, messages and error handling. A small planner stands in for `motion_server.py` and MoveIt: a damped least-squares IK solver, Cartesian paths in 5 mm steps, and joint-space moves. The viewer draws the real UR7e meshes with a hand-written WebGL renderer, posed with the kinematic chain from the official URDF (`base_link` frame). The meshes come from [Universal Robots' ROS 2 description](https://github.com/UniversalRobots/Universal_Robots_ROS2_Description) (BSD-3-Clause, licence in `assets/models/ur7e/`), converted to a compact binary.
-- **`ask` is retrieval-augmented generation in the browser.** The site's documents (split at their headings), this README (read live from the site, so the agent always knows the current features) and the CV are indexed with BM25. A question pulls the best-matching passages, and a small open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers using only those passages and lists them as sources. It answers as me, in the first person, and `agent` keeps the last two exchanges so follow-ups like "tell me more" work. When something on the site answers the question (my CV, the email window, the arm controller, my research notes, photos and so on), it says where to find it and asks "Want me to open it?", then opens it on a yes. These offers come from a fixed list matched against the question, not from the model, so they behave the same with every model and in lite mode. Visitors choose the model (Llama 3.2 3B or Llama 3.1 8B). It downloads once and is cached by the browser, and nothing is sent to a server. Accuracy guardrails:
-  - Low temperature.
-  - The rule "answer only from the context" is stated before and after the question.
-  - The CV's experience section is included for work questions, so different roles don't get mixed up.
-  - If none of a question's specific words appear anywhere on the site, it says so without asking the model at all. Greetings, filler and time words ("hey", "at the moment") don't count as topics, so friendly questions still get answered.
-  - Today's date is given to the model, and date ranges are spelled out ("from June 2026 to September 2026") so it gets tenses right.
-
-  I tested six candidate models through whole conversations and dropped the four that made things up: Qwen2.5 0.5B, 1.5B and 3B, and Llama 3.2 1B. **Lite mode** needs no model. It classifies the question (current work, internship, studies, skills, the arm, things to try and so on) and replies with the most relevant lines from the site and CV, turned into first person. It's the default on phones, which don't give a browser tab enough memory for a 2 GB model, and in browsers without WebGPU. If loading a model ever crashes the tab, a flag left in `localStorage` makes the agent suggest lite mode on the next visit.
 - **Caching:** GitHub Pages caches pages for 10 minutes, so the CSS and JS are loaded with a `?v=N` query string. Bump `N` in `index.html` whenever they change.
+
+### The agent
+
+`agent` (and `ask` for a single question) is retrieval-augmented generation that runs entirely in the browser.
+
+- **What it knows.** The desktop documents (split at their headings), this README (fetched live from the site, minus the developer-only sections) and my CV (`assets/data/cv.json`) are split into passages and indexed with BM25. Updating this README updates what the agent knows on the next page load.
+- **How it answers.** Each message pulls the few best-matching passages. An open model, run with [WebLLM](https://github.com/mlc-ai/web-llm) on WebGPU, answers as me in the first person using only those passages, and lists them as clickable sources. The chat remembers the last two exchanges, so follow-ups like "tell me more" work.
+- **Models.** Visitors choose Llama 3.2 3B (1.8 GB, recommended) or Llama 3.1 8B (4.5 GB). The model downloads once and the browser caches it. Nothing is sent to a server.
+- **Lite mode.** No model at all: it works out what kind of question was asked (current work, internship, studies, skills, the arm, things to try and so on) and replies with the most relevant lines from the site and CV, turned into first person. It's the default on phones, which don't give a browser tab enough memory for a model, and in browsers without WebGPU. If loading a model ever closes the tab, a flag left in `localStorage` makes the agent suggest lite mode on the next visit.
+- **Opening things.** When something on the site answers the question (my CV, the email window, the arm controller, my research notes, photos and so on), the agent says where to find it and asks "Want me to open it?", then opens it on a yes. These offers come from a fixed list in `ask.js` matched against the question, not from the model, so they behave the same with every model and in lite mode.
+- **Keeping it accurate.**
+  - The rule "answer only from these passages" is stated before and after the question, at a low temperature.
+  - If none of a question's real topics appear anywhere on the site, it says so without asking the model at all. Greetings and time words ("hey", "at the moment") don't count as topics.
+  - The CV's experience section is included for work questions, today's date is given to the model, and date ranges are spelled out ("from June 2026 to September 2026"), so roles and tenses don't get mixed up.
+  - I tested six models through whole conversations full of trick questions and kept the two that never made anything up.
 
 ### Adding something to the desktop
 
