@@ -446,14 +446,14 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
 // ---------- actions: things on the site the agent can open for you ----------
 // The question (not the model) decides what to offer, so it works the same with every model and in lite mode.
 const ACTIONS = [
-  { re: /\b(cv|resume|résumé|curriculum vitae)\b/i, id: "cv-pdf", label: "my CV", ask: "Want me to open my CV?" },
+  { re: /\b(cv|resume|résumé|curriculum vitae)\b/i, said: /\bmy CV\b/i, id: "cv-pdf", label: "my CV", ask: "Want me to open my CV?" },
   { re: /\blinked ?in\b/i, id: "c-linkedin", label: "my LinkedIn", ask: "Want me to open my LinkedIn in a new tab?" },
   { re: /\b(source code|site source|repo(sitory)?)\b/i, id: "c-source", label: "this site's source code", ask: "Want me to open this site's source code on GitHub?" },
   { re: /\bgit ?hub\b/i, id: "c-github", label: "my GitHub", ask: "Want me to open my GitHub in a new tab?" },
   { re: /\b(contact|e-?mail|message|get in touch|reach (you|out)|hire)\b/i, id: "c-email", label: "a message window", ask: "Want me to open a message window so you can email me from here?" },
-  { re: /\b(robot|arm|controller|ur7e|simulation|simulator)\b/i, id: "arm-app", label: "the Arm Controller", ask: "Want me to launch the Arm Controller so you can try it?" },
+  { re: /\b(robot|arm|controller|ur7e|simulation|simulator)\b/i, said: /\b(arm controller|robot arm|ur7e)\b/i, id: "arm-app", label: "the Arm Controller", ask: "Want me to launch the Arm Controller so you can try it?" },
   { re: /\b(cool|coolest|fun|play|game|demo|impressive)\b/i, id: "arm-app", label: "the Arm Controller", ask: "Want me to launch the Arm Controller so you can try it?" },
-  { re: /\b(photos?|pictures?|pics|images?|gallery)\b/i, id: "photos", label: "my photos", them: true, ask: "Want me to open my photos?" },
+  { re: /\b(photos?|pictures?|pics|images?|gallery)\b/i, said: /\bmy photos\b/i, id: "photos", label: "my photos", them: true, ask: "Want me to open my photos?" },
   { re: /\b(research|ltc|liquid|kalman|final[- ]year project|working on|at the moment|currently)\b/i, id: "lnn", label: "my research notes", them: true, ask: "Want me to open my research notes?" },
   { re: /\b(leadership|society|societies|ibm|ambassador)\b/i, id: "leadership-md", label: "my leadership notes", them: true, ask: "Want me to open my leadership notes?" },
   { re: /\b(intern|internship|oxford dynamics)\b/i, id: "oxford-md", label: "my Oxford Dynamics notes", them: true, ask: "Want me to open my Oxford Dynamics notes?" },
@@ -466,6 +466,19 @@ const SHOW = /\b(show|open|see|view|launch|start|bring up|pull up|take me|let me
 const YES = /^(y|ya|yes|yeah|yep|yup|sure|ok|okay|please|go ahead|go for it|do it|open it|of course|absolutely|why not|sounds good|alright)\b/i;
 const NO = /^(n|no|nope|nah|not now|no thanks|maybe later|later|don'?t)\b/i;
 const findAction = (text) => ACTIONS.find((a) => a.re.test(text));
+// what my own reply talks about, for when the question didn't name anything ("tell me something cool")
+const mentioned = (reply) => ACTIONS.find((a) => a.said && a.said.test(reply));
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+// windows an item opens, and whether they're all on screen already
+const winsOf = (id) => FS[id].opens || [id];
+const isOpen = (id) => FS[id].type !== "link" && winsOf(id).every((w) => wins.has(w) && !wins.get(w).el.hidden);
+// open it, or bring it to the front if it's already open (without re-laying out the windows)
+const fronted = (a) => `${cap(a.label)} ${a.them ? "are" : "is"} already open, so I've brought ${a.them ? "them" : "it"} to the front.`;
+function showItem(id) {
+  if (!isOpen(id)) { open(id); return false; }
+  winsOf(id).forEach(focus);
+  return true;
+}
 // "in the CV folder on the desktop", "in Projects → Arm Controller on the desktop"
 const whereIs = (id) => {
   const parent = PARENT[id];
@@ -521,18 +534,25 @@ async function agentCommand(arg, io) {
       offer = null;
       done.add(o.id);
       if (YES.test(raw)) {
-        open(o.id);
-        io.print(me + escapeHtml(FS[o.id].type === "link" ? `Opened ${o.label} in a new tab.` : `Done, I've opened ${o.label} for you.`));
+        const already = showItem(o.id);
+        io.print(me + escapeHtml(FS[o.id].type === "link" ? `Opened ${o.label} in a new tab.` : already ? fronted(o) : `Done, I've opened ${o.label} for you.`));
         continue;
       }
       if (NO.test(raw)) { io.print(me + "No problem. What else would you like to know?"); continue; }
     }
 
-    // "show me your CV": say where it is and offer to open it, no model needed
+    // "show me your CV", or just "controller" / "cv" typed like a terminal command:
+    // say where it is and offer to open it, no model needed
     // (asking outright always gets the offer; unprompted offers aren't repeated once answered)
     const action = findAction(raw);
-    const fresh = action && !done.has(action.id);
-    if (action && SHOW.test(raw)) {
+    if (action && (SHOW.test(raw) || raw.split(/\s+/).length <= 2)) {
+      if (isOpen(action.id)) {
+        showItem(action.id);
+        const reply = fronted(action);
+        io.print(me + escapeHtml(reply));
+        remember(raw, reply);
+        continue;
+      }
       const reply = `You can find ${action.label} ${whereIs(action.id)}. Want me to open ${action.them ? "them" : "it"}?`;
       io.print(me + escapeHtml(reply));
       remember(raw, reply);
@@ -542,11 +562,19 @@ async function agentCommand(arg, io) {
 
     const reply = await answer(io, index, raw, history, me);
     remember(raw, reply);
-    // the site can do something about it: offer to
-    if (fresh && reply && !/(isn't|not) (something I've put )?on my site|not something I've put/i.test(reply)) {
-      io.print(me + escapeHtml(action.ask));
-      offer = action;
+    // the site can do something about what was asked, or about what I just talked about: offer to
+    // (or if it's already open, just bring it to the front)
+    if (!reply || /(isn't|not) (something I've put )?on my site|not something I've put/i.test(reply)) continue;
+    const next = action || mentioned(reply);
+    if (!next) continue;
+    if (isOpen(next.id)) {
+      if (topmost() !== winsOf(next.id).at(-1)) { showItem(next.id); io.print(me + escapeHtml(fronted(next))); }
+      continue;
     }
+    if (done.has(next.id)) continue;
+    done.add(next.id);
+    io.print(me + escapeHtml(next.ask));
+    offer = next;
   }
   io.print('<span class="t-dim">Left the chat with anmol. Type</span> <button type="button" class="t-cmd" data-cmd="agent">agent</button> <span class="t-dim">to come back.</span>');
 }
