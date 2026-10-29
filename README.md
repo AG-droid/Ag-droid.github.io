@@ -61,7 +61,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | 🖥️ **Desktop and windows** | Drag, focus, minimise, maximise and close windows, like a real OS |
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
-| 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: type commands and watch a simulated UR7e plan and move |
+| 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: `client.py` runs in its own terminal window and drives a real UR7e model in a WebGL viewer |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
@@ -85,7 +85,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 │   ├── Liquid Neural Networks.md
 │   └── Reading List.txt
 ├── Projects/
-│   ├── Arm Controller     (app: drive a simulated UR7e from a terminal)
+│   ├── Arm Controller     (app: client.py in a terminal + the UR7e in a 3D viewer)
 │   └── Arm Controller.md
 ├── CV/
 │   └── Anmol_Goyal_CV.pdf
@@ -125,7 +125,8 @@ There are also a couple of easter eggs. Try `sudo`.
 ├── assets/
 │   ├── css/style.css        windows, dock, terminal, notifications, light/dark + mobile layouts
 │   ├── js/main.js           file system, window manager, terminal, contact form, boot screen
-│   ├── js/arm.js            arm controller: UR7e kinematics, IK solver, planners, 3D view and its terminal
+│   ├── js/arm.js            arm controller: client.py port, UR7e kinematics, IK + planners, WebGL viewer
+│   ├── models/ur7e/         UR7e meshes converted from Universal Robots' ROS 2 description (BSD-3-Clause)
 │   ├── img/                 wallpaper, Oxford Dynamics and event photos
 │   └── cv/                  CV (PDF)
 ├── cv-src/                LaTeX source for the CV (build with latexmk, copy the PDF to assets/cv/)
@@ -139,7 +140,7 @@ There are also a couple of easter eggs. Try `sudo`.
 - **Documents** live in `<template>` elements in `index.html`, so the content is plain HTML that's easy to edit.
 - **The window manager** handles stacking order, dragging with pointer events, minimise to the dock and maximise. Windows open in a slight cascade so they don't stack exactly on top of each other.
 - **The contact form** posts to [Web3Forms](https://web3forms.com) from the browser. The window closes as soon as you hit send, and a notification tracks the message. If sending fails, your draft is kept and you get a *Try again* button.
-- **The arm controller** is a port of my ROS 2 client. Forward kinematics come from the UR7e's DH parameters, a damped least-squares IK solver stands in for MoveIt, Cartesian moves are planned in 5 mm steps along a straight line, and the arm is drawn on a `<canvas>` with a small hand-written 3D projection.
+- **The arm controller** opens two windows. The terminal runs a line-by-line JavaScript port of my ROS 2 `client.py`, with the same commands, prompts, messages and error handling. A small planner stands in for `motion_server.py` and MoveIt: a damped least-squares IK solver, Cartesian paths in 5 mm steps, and joint-space moves. The viewer draws the real UR7e meshes with a hand-written WebGL renderer, posed with the kinematic chain from the official URDF (`base_link` frame). The meshes come from [Universal Robots' ROS 2 description](https://github.com/UniversalRobots/Universal_Robots_ROS2_Description) (BSD-3-Clause, licence in `assets/models/ur7e/`), converted to a compact binary.
 - **Caching:** GitHub Pages caches pages for 10 minutes, so the CSS and JS are loaded with a `?v=N` query string. Bump `N` in `index.html` whenever they change.
 
 ### Adding something to the desktop

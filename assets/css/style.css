@@ -271,31 +271,22 @@ img { display: block; max-width: 100%; }
 @media (max-width: 700px) { .term .t-banner { font-size: 7px; } .term { font-size: 12px; } }
 .term a { color: #79c0ff; }
 
-/* Arm controller: 3D view beside its terminal, stacked when the window is narrow */
-.win__body--arm { overflow: hidden; container-type: size; }
-.arm { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); height: 100%; background: #0d1117; }
-.arm__view { position: relative; min-height: 0; background: radial-gradient(120% 90% at 50% 30%, #2a3038, #14171c 70%); }
-.arm__view canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
-.arm__view canvas:active { cursor: grabbing; }
-.arm__hud { position: absolute; margin: 0; pointer-events: none; font: 11px/1.5 var(--mono); color: #8b949e; }
-.arm__hud--tl { top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
-.arm__hud--tr { bottom: 10px; right: 12px; text-align: right; }
-.arm__hud--bl { bottom: 10px; left: 12px; color: #c9d1d9; white-space: pre; text-shadow: 0 1px 2px #000; }
-.arm__chip { padding: 2px 8px; border-radius: 999px; background: rgba(13, 17, 23, .7); border: 1px solid #30363d; color: #c9d1d9; }
-.arm__side { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid #30363d; }
-.arm__term { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.arm__term .term__line[hidden] { display: none; }
-.arm__chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; background: #161b22; border-top: 1px solid #30363d; }
-.arm__chipbtn {
-  padding: 3px 9px; border-radius: 6px; font: 12px var(--mono); color: #c9d1d9;
-  background: #21262d; border: 1px solid #30363d; cursor: pointer;
-}
-.arm__chipbtn:hover { color: #fff; border-color: #79c0ff; }
-@container (max-width: 760px) {
-  .arm { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
-  .arm__side { border-left: 0; border-top: 1px solid #30363d; }
-  .arm__hud--tr { display: none; }
-  .arm__hud--bl { font-size: 10px; }
+/* Arm controller: the UR7e viewer (its terminal is a normal .term window) */
+.win__body--armview { overflow: hidden; }
+.armview { position: relative; height: 100%; background: radial-gradient(120% 90% at 50% 25%, #353c46, #15181d 75%); }
+.armview canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.armview canvas:active { cursor: grabbing; }
+.armview__status { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 24px; text-align: center; font: 13px var(--mono); color: #8b949e; }
+.armview__status[hidden] { display: none; }
+.armview__joints, .armview__hint { position: absolute; margin: 0; pointer-events: none; font: 11px/1.5 var(--mono); color: #8b949e; }
+.armview__joints { left: 12px; bottom: 10px; color: #c9d1d9; white-space: pre; text-shadow: 0 1px 2px #000; }
+.armview__hint { right: 12px; bottom: 10px; text-align: right; }
+.term__line[hidden] { display: none; }
+@media (max-width: 700px) {
+  .win.win--stack-top { height: 42% !important; }
+  .win.win--stack-bottom { top: calc(var(--menubar-h) + 42%) !important; height: calc(58% - var(--menubar-h) - var(--dock-h)) !important; }
+  .armview__hint { display: none; }
+  .armview__joints { font-size: 10px; }
 }
 
 /* ---------- Dock ---------- */

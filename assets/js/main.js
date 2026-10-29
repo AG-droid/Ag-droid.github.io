@@ -24,7 +24,9 @@ const FS = {
   reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
 
   projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm-app", "arm-md"] },
-  "arm-app":     { name: "Arm Controller", type: "app", w: 1080, h: 680 },
+  "arm-app":     { name: "Arm Controller", type: "app", opens: ["arm-sim", "arm-term"] },
+  "arm-sim":     { name: "UR7e Simulation", type: "armview", w: 620, h: 560 },
+  "arm-term":    { name: "Terminal: client.py", type: "armterm", w: 680, h: 560 },
   "arm-md":      { name: "Arm Controller.md", type: "doc", tpl: "doc-arm", w: 660, h: 640 },
 
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
@@ -84,8 +86,10 @@ function iconArt(id) {
     case "link":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#fff"/><path d="M26 38l14-14M28 24h12v12" fill="none" stroke="#3b5bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     case "terminal":
+    case "armterm":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 24l8 7-8 7" fill="none" stroke="#3fb950" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 39h14" stroke="#c9d1d9" stroke-width="3.5" stroke-linecap="round"/></svg>`;
     case "app":
+    case "armview":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#1f2328" stroke="#30363d"/><path d="M18 49h16" stroke="#7f93ab" stroke-width="4" stroke-linecap="round"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M26 47V36l12-12 6 6" stroke="#d5dae1" stroke-width="5"/><path d="M44 30v6M41 36h6" stroke="#79c0ff" stroke-width="2.5"/></g><circle cx="26" cy="36" r="3.5" fill="#7f93ab"/><circle cx="38" cy="24" r="3.5" fill="#7f93ab"/></svg>`;
     case "photos":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#fff"/><g opacity=".9"><circle cx="24" cy="25" r="8" fill="#f59e0b"/><circle cx="40" cy="25" r="8" fill="#ef4444"/><circle cx="24" cy="39" r="8" fill="#22c55e"/><circle cx="40" cy="39" r="8" fill="#3b5bff"/></g></svg>`;
@@ -124,6 +128,7 @@ function open(id) {
   const item = FS[id];
   if (!item) return;
   if (item.type === "link") { window.open(item.href, "_blank", "noopener"); return; }
+  if (item.opens) { launch(item.opens); return; }
   if (wins.has(id)) { const w = wins.get(id); w.el.hidden = false; focus(id); return; }
 
   const el = document.createElement("section");
@@ -166,6 +171,23 @@ function open(id) {
   el.addEventListener("pointerdown", () => focus(id), true);
   makeDraggable(el);
   focus(id);
+}
+
+// Open an app made of several windows side by side, or one above the other on phones
+function launch(ids) {
+  ids.forEach((id) => open(id));
+  const els = ids.map((id) => wins.get(id).el);
+  els.forEach((el, i) => el.classList.toggle("win--stack-top", i === 0));
+  els.forEach((el, i) => el.classList.toggle("win--stack-bottom", i > 0));
+  if (mobile.matches) return;
+  const gap = 12, total = els.reduce((s, el) => s + el.offsetWidth, 0) + gap * (els.length - 1);
+  let left = Math.max(16, (window.innerWidth - total) / 2);
+  els.forEach((el) => {
+    el.classList.remove("is-max");
+    el.style.left = Math.min(left, window.innerWidth - el.offsetWidth - 16) + "px";
+    el.style.top = "56px";
+    left += el.offsetWidth + gap;
+  });
 }
 
 function focus(id) {
@@ -288,8 +310,11 @@ function render(id, body) {
     case "compose":
       compose(body, id);
       break;
-    case "app":
-      wins.get(id).focusInput = armController(body);
+    case "armview":
+      armViewer(body);
+      break;
+    case "armterm":
+      wins.get(id).focusInput = armTerminal(body, () => close(id));
       break;
   }
 }
