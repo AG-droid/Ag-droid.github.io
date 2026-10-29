@@ -27,6 +27,7 @@ Rules:
 - Greetings and small talk are fine: reply briefly and warmly, then offer to talk about your work and studies or to show them around the site.
 - The visitor is not Anmol. "You" in their message means you, Anmol.
 - Prefer the NOTES' own wording for facts and dates, and when asked for a list (modules, skills, roles), give all of it.
+- Don't offer to open files or take actions yourself; the website asks the visitor separately.
 - Keep replies to at most 3 short sentences of plain text, with no markdown and no lists.`;
 
 const IDK = `That's not something I've put on my site, so I won't guess. Drop me an email at anmol.goyal@kcl.ac.uk and I'll tell you.`;
@@ -398,9 +399,41 @@ ${ASK_EXAMPLES.map((q) => `  <button type="button" class="t-cmd" data-cmd="ask $
   }
   const index = await buildAskIndex(), gpu = await gpuInfo();
   if (!(await ensureModel(io, gpu, switching)) || !question) return;
-  await answer(io, index, question);
+  const reply = await answer(io, index, question);
+  const action = findAction(question);
+  if (action && !/not something I've put|(isn't|not) on my site/i.test(reply)) io.print(`<span class="t-dim">open it:</span> <button type="button" class="t-src" data-open="${action.id}">${escapeHtml(FS[action.id].name)}</button>`);
   io.print(disclaimer());
 }
+
+// ---------- actions: things on the site the agent can open for you ----------
+// The question (not the model) decides what to offer, so it works the same with every model and in lite mode.
+const ACTIONS = [
+  { re: /\b(cv|resume|résumé|curriculum vitae)\b/i, id: "cv-pdf", label: "my CV", ask: "Want me to open my CV?" },
+  { re: /\blinked ?in\b/i, id: "c-linkedin", label: "my LinkedIn", ask: "Want me to open my LinkedIn in a new tab?" },
+  { re: /\b(source code|site source|repo(sitory)?)\b/i, id: "c-source", label: "this site's source code", ask: "Want me to open this site's source code on GitHub?" },
+  { re: /\bgit ?hub\b/i, id: "c-github", label: "my GitHub", ask: "Want me to open my GitHub in a new tab?" },
+  { re: /\b(contact|e-?mail|message|get in touch|reach (you|out)|hire)\b/i, id: "c-email", label: "a message window", ask: "Want me to open a message window so you can email me from here?" },
+  { re: /\b(robot|arm|controller|ur7e|simulation|simulator)\b/i, id: "arm-app", label: "the Arm Controller", ask: "Want me to launch the Arm Controller so you can try it?" },
+  { re: /\b(cool|coolest|fun|play|game|demo|impressive)\b/i, id: "arm-app", label: "the Arm Controller", ask: "Want me to launch the Arm Controller so you can try it?" },
+  { re: /\b(photos?|pictures?|pics|images?|gallery)\b/i, id: "photos", label: "my photos", them: true, ask: "Want me to open my photos?" },
+  { re: /\b(research|ltc|liquid|kalman|final[- ]year project|working on|at the moment|currently)\b/i, id: "lnn", label: "my research notes", them: true, ask: "Want me to open my research notes?" },
+  { re: /\b(leadership|society|societies|ibm|ambassador)\b/i, id: "leadership-md", label: "my leadership notes", them: true, ask: "Want me to open my leadership notes?" },
+  { re: /\b(intern|internship|oxford dynamics)\b/i, id: "oxford-md", label: "my Oxford Dynamics notes", them: true, ask: "Want me to open my Oxford Dynamics notes?" },
+  { re: /\b(experience|work history|jobs?)\b/i, id: "experience-md", label: "my experience", ask: "Want me to open my experience?" },
+  { re: /\b(reading list|papers?)\b/i, id: "reading", label: "my reading list", ask: "Want me to open my reading list?" },
+  { re: /\bhow (were|are) you (built|made)|how do you work\b/i, id: "agent-readme", label: "my agent's README", ask: "Want me to open the README that explains how I work?" },
+];
+// "show me your CV", "open the arm", "can I see your photos?"
+const SHOW = /\b(show|open|see|view|launch|start|bring up|pull up|take me|let me|display|play with|try)\b/i;
+const YES = /^(y|ya|yes|yeah|yep|yup|sure|ok|okay|please|go ahead|go for it|do it|open it|of course|absolutely|why not|sounds good|alright)\b/i;
+const NO = /^(n|no|nope|nah|not now|no thanks|maybe later|later|don'?t)\b/i;
+const findAction = (text) => ACTIONS.find((a) => a.re.test(text));
+// "in the CV folder on the desktop", "in Projects → Arm Controller on the desktop"
+const whereIs = (id) => {
+  const parent = PARENT[id];
+  if (!parent) return DOCK.includes(id) && !DESKTOP.includes(id) ? "in the dock at the bottom of the screen" : "on the desktop";
+  return PARENT[parent] ? `in ${pathOf(parent).replace(/ \/ /g, " → ")} on the desktop` : `in the ${FS[parent].name} folder on the desktop`;
+};
 
 // the welcome screen for `agent`: the site's ANMOL banner in green, then what it can do
 function agentIntro(io) {
@@ -436,14 +469,46 @@ async function agentCommand(arg, io) {
   const index = await buildAskIndex(), gpu = await gpuInfo();
   agentIntro(io);
   if (!(await ensureModel(io, gpu, /--?model/.test(arg)))) return;
-  const history = [];
+  const history = [], done = new Set(), me = '<span class="t-ok">anmol ›</span> ';
+  const remember = (q, a) => { history.push({ role: "user", content: q }, { role: "assistant", content: a }); if (history.length > 4) history.splice(0, 2); };
+  let offer = null; // an action waiting for a yes or no
   for (;;) {
     const raw = (await io.read('you ›')).trim();
     if (!raw) continue;
     if (/^(exit|quit|bye|q|\u001b)$/i.test(raw)) break;
-    const reply = await answer(io, index, raw, history, '<span class="t-ok">anmol ›</span> ');
-    history.push({ role: "user", content: raw }, { role: "assistant", content: reply });
-    if (history.length > 4) history.splice(0, 2); // remember the last two exchanges
+
+    // the reply to "Want me to open…?"
+    if (offer) {
+      const o = offer;
+      offer = null;
+      done.add(o.id);
+      if (YES.test(raw)) {
+        open(o.id);
+        io.print(me + escapeHtml(FS[o.id].type === "link" ? `Opened ${o.label} in a new tab.` : `Done, I've opened ${o.label} for you.`));
+        continue;
+      }
+      if (NO.test(raw)) { io.print(me + "No problem. What else would you like to know?"); continue; }
+    }
+
+    // "show me your CV": say where it is and offer to open it, no model needed
+    // (asking outright always gets the offer; unprompted offers aren't repeated once answered)
+    const action = findAction(raw);
+    const fresh = action && !done.has(action.id);
+    if (action && SHOW.test(raw)) {
+      const reply = `You can find ${action.label} ${whereIs(action.id)}. Want me to open ${action.them ? "them" : "it"}?`;
+      io.print(me + escapeHtml(reply));
+      remember(raw, reply);
+      offer = action;
+      continue;
+    }
+
+    const reply = await answer(io, index, raw, history, me);
+    remember(raw, reply);
+    // the site can do something about it: offer to
+    if (fresh && reply && !/(isn't|not) (something I've put )?on my site|not something I've put/i.test(reply)) {
+      io.print(me + escapeHtml(action.ask));
+      offer = action;
+    }
   }
   io.print('<span class="t-dim">Left the chat with anmol. Type</span> <button type="button" class="t-cmd" data-cmd="agent">agent</button> <span class="t-dim">to come back.</span>');
 }
