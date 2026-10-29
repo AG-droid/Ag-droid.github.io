@@ -20,7 +20,7 @@
 
 ## About
 
-Instead of a scrolling page, the portfolio is a desktop. Folders on the left hold my experience, research and CV. A dock sits at the bottom, and a terminal greets you when the site loads. You can drag windows around, open documents, flick through photos, read the CV or send me a message without leaving the page.
+Instead of a scrolling page, the portfolio is a desktop. Folders on the left hold my experience, research, projects and CV. A dock sits at the bottom, and a terminal greets you when the site loads. You can drag windows around, open documents, flick through photos, read the CV or send me a message without leaving the page.
 
 I'm a Maths with Statistics student at **King's College London** and a visiting student AI researcher at **Oxford Dynamics**. I work on robotics, physical AI and **liquid neural networks**.
 
@@ -61,6 +61,7 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 | 🖥️ **Desktop and windows** | Drag, focus, minimise, maximise and close windows, like a real OS |
 | 📁 **File system** | Nested folders with Markdown-style docs and photo galleries |
 | ⌨️ **Terminal** | Opens on load with an ASCII welcome; real commands with a working `cd`, Tab completion, history and clickable shortcuts |
+| 🦾 **Arm controller** | The robot-arm controller I wrote in my internship (ROS 2 + MoveIt), ported to the browser: type commands and watch a simulated UR7e plan and move |
 | ✉️ **Contact form** | Sends a message straight to my inbox in the background, with notifications for progress, success and failure |
 | 📄 **CV viewer** | The PDF opens in a window, with buttons to open it in a new tab or download it |
 | 📱 **Mobile layout** | On phones it becomes a home-screen grid with full-screen apps |
@@ -83,6 +84,9 @@ I reviewed every claim on the site and in the CV against what I actually did, an
 ├── Research/
 │   ├── Liquid Neural Networks.md
 │   └── Reading List.txt
+├── Projects/
+│   ├── Arm Controller     (app: drive a simulated UR7e from a terminal)
+│   └── Arm Controller.md
 ├── CV/
 │   └── Anmol_Goyal_CV.pdf
 ├── Contact/           → Contact.md, Email, LinkedIn, GitHub, Site Source
@@ -100,6 +104,7 @@ anmol@kcl:~$ help
 | `research` | Open my current research on liquid neural networks |
 | `experience` | Open my experience |
 | `cv` | Open my CV |
+| `controller` | Launch my robot-arm controller |
 | `email` | Write me a message |
 | `contact` | Print my links |
 | `cd <folder>`, `cd ..`, `cd ~` | Move around the file system (the prompt shows where you are) |
@@ -120,6 +125,7 @@ There are also a couple of easter eggs. Try `sudo`.
 ├── assets/
 │   ├── css/style.css        windows, dock, terminal, notifications, light/dark + mobile layouts
 │   ├── js/main.js           file system, window manager, terminal, contact form, boot screen
+│   ├── js/arm.js            arm controller: UR7e kinematics, IK solver, planners, 3D view and its terminal
 │   ├── img/                 wallpaper, Oxford Dynamics and event photos
 │   └── cv/                  CV (PDF)
 ├── cv-src/                LaTeX source for the CV (build with latexmk, copy the PDF to assets/cv/)
@@ -133,6 +139,7 @@ There are also a couple of easter eggs. Try `sudo`.
 - **Documents** live in `<template>` elements in `index.html`, so the content is plain HTML that's easy to edit.
 - **The window manager** handles stacking order, dragging with pointer events, minimise to the dock and maximise. Windows open in a slight cascade so they don't stack exactly on top of each other.
 - **The contact form** posts to [Web3Forms](https://web3forms.com) from the browser. The window closes as soon as you hit send, and a notification tracks the message. If sending fails, your draft is kept and you get a *Try again* button.
+- **The arm controller** is a port of my ROS 2 client. Forward kinematics come from the UR7e's DH parameters, a damped least-squares IK solver stands in for MoveIt, Cartesian moves are planned in 5 mm steps along a straight line, and the arm is drawn on a `<canvas>` with a small hand-written 3D projection.
 - **Caching:** GitHub Pages caches pages for 10 minutes, so the CSS and JS are loaded with a `?v=N` query string. Bump `N` in `index.html` whenever they change.
 
 ### Adding something to the desktop

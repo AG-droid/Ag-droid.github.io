@@ -26,8 +26,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=26">
-  <script defer src="assets/js/main.js?v=26"></script>
+  <link rel="stylesheet" href="assets/css/style.css?v=27">
+  <script defer src="assets/js/arm.js?v=27"></script>
+  <script defer src="assets/js/main.js?v=27"></script>
 </head>
 <body>
   <!-- Boot screen (shown once per visit) -->
@@ -106,6 +107,24 @@
     <h2>Setup</h2>
     <p>Run as my KCL final-year project under joint academic and industry supervision, with Oxford Dynamics' research division.</p>
     <p class="note">In progress. Notes and results will be added to this folder as the project develops.</p>
+  </template>
+
+  <template id="doc-arm">
+    <p class="kicker">Project · Oxford Dynamics internship · 2026</p>
+    <h1>Arm Controller</h1>
+    <p class="lead">The command-line controller I wrote for a UR7e arm in Python, on ROS 2 and MoveIt, ported so you can drive it in your browser.</p>
+    <p><button class="btn btn--primary" type="button" data-open="arm-app">Launch Arm Controller</button></p>
+    <h2>What it does</h2>
+    <ul>
+      <li>Moves the tool along or about any axis: <code>move z 100</code> in millimetres, <code>move ry 30</code> in degrees.</li>
+      <li>Four modes, switched with <code>mode</code>: moves are measured in the base frame (global) or the tool's own frame (local), and planned either as a straight line for the tool (Cartesian) or as a move of all six joints together (joint space).</li>
+      <li>If a straight-line path fails partway, for example near a singularity, it offers to reach the same target with a joint-space move instead.</li>
+      <li>Saves the arm's current joint angles as named waypoints and replays them, or runs a saved sequence of waypoints as a trajectory. A trajectory only starts if the arm is already at its first waypoint.</li>
+    </ul>
+    <h2>How the real one is built</h2>
+    <p>Two ROS 2 nodes. The client node reads commands, manages waypoints and reads the live <code>/joint_states</code> topic. The planner node holds the Cartesian and joint-space planners and executes the paths through MoveIt. Both run on a <code>MultiThreadedExecutor</code> in a background thread, so the blocking command prompt and live ROS communication can run at the same time.</p>
+    <h2>What's different in the browser</h2>
+    <p>There's no ROS here. The arm's kinematics are computed in JavaScript from the UR7e's published DH parameters, a damped least-squares IK solver stands in for MoveIt, and the only collisions checked are with the floor and the robot's base. The commands, modes, messages and waypoint logic follow my original code.</p>
   </template>
 
   <template id="doc-reading">

@@ -1,7 +1,7 @@
 // ===================== File system =====================
 // Everything on the "computer". Docs point at <template> ids in index.html.
 const FS = {
-  home:          { name: "Anmol", type: "folder", glyph: "home", children: ["about", "experience", "research", "cv", "contact", "terminal"] },
+  home:          { name: "Anmol", type: "folder", glyph: "home", children: ["about", "experience", "research", "projects", "cv", "contact", "terminal"] },
   about:         { name: "About Me.txt", type: "doc", tpl: "doc-about", w: 600, h: 560 },
 
   experience:    { name: "Experience", type: "folder", glyph: "experience", children: ["experience-md", "oxford", "leadership"] },
@@ -22,6 +22,10 @@ const FS = {
   research:      { name: "Research", type: "folder", glyph: "research", children: ["lnn", "reading"] },
   lnn:           { name: "Liquid Neural Networks.md", type: "doc", tpl: "doc-research", w: 660, h: 640 },
   reading:       { name: "Reading List.txt", type: "doc", tpl: "doc-reading", w: 560, h: 340 },
+
+  projects:      { name: "Projects", type: "folder", glyph: "projects", children: ["arm-app", "arm-md"] },
+  "arm-app":     { name: "Arm Controller", type: "app", w: 1080, h: 680 },
+  "arm-md":      { name: "Arm Controller.md", type: "doc", tpl: "doc-arm", w: 660, h: 640 },
 
   cv:            { name: "CV", type: "folder", glyph: "cv", children: ["cv-pdf"] },
   "cv-pdf":      { name: "Anmol_Goyal_CV.pdf", type: "pdf", src: "assets/cv/Anmol_Goyal_CV.pdf?v=6", w: 760, h: 720 },
@@ -60,6 +64,7 @@ const GLYPHS = {
   oxford: '<path d="M22 48h14M27 48v-5l6-6 6 4"/><circle cx="33" cy="37" r="1.5"/><path d="M39 41l3-3"/>',
   leadership: '<rect x="29" y="30" width="6" height="11" rx="3"/><path d="M25 38a7 7 0 0 0 14 0M32 45v3"/>',
   cv: '<circle cx="32" cy="35" r="4"/><path d="M24 48a8 7 0 0 1 16 0"/>',
+  projects: '<path d="M27 33l-6 6 6 6M37 33l6 6-6 6"/>',
 };
 function iconArt(id) {
   const item = FS[id];
@@ -80,6 +85,8 @@ function iconArt(id) {
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="48" rx="12" fill="#fff"/><path d="M26 38l14-14M28 24h12v12" fill="none" stroke="#3b5bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     case "terminal":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#0d1117" stroke="#30363d"/><path d="M17 24l8 7-8 7" fill="none" stroke="#3fb950" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 39h14" stroke="#c9d1d9" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+    case "app":
+      return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#1f2328" stroke="#30363d"/><path d="M18 49h16" stroke="#7f93ab" stroke-width="4" stroke-linecap="round"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M26 47V36l12-12 6 6" stroke="#d5dae1" stroke-width="5"/><path d="M44 30v6M41 36h6" stroke="#79c0ff" stroke-width="2.5"/></g><circle cx="26" cy="36" r="3.5" fill="#7f93ab"/><circle cx="38" cy="24" r="3.5" fill="#7f93ab"/></svg>`;
     case "photos":
       return `<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="48" rx="11" fill="#fff"/><g opacity=".9"><circle cx="24" cy="25" r="8" fill="#f59e0b"/><circle cx="40" cy="25" r="8" fill="#ef4444"/><circle cx="24" cy="39" r="8" fill="#22c55e"/><circle cx="40" cy="39" r="8" fill="#3b5bff"/></g></svg>`;
   }
@@ -281,6 +288,9 @@ function render(id, body) {
     case "compose":
       compose(body, id);
       break;
+    case "app":
+      wins.get(id).focusInput = armController(body);
+      break;
   }
 }
 
@@ -341,6 +351,7 @@ function terminal(id, body) {
   open &lt;name&gt;  open it in a window  <span class="t-dim">(open . for this folder)</span>
   ${cmd("pwd")}where am I?
   ${cmd("research")}what I'm working on now
+  ${cmd("controller")}drive my robot arm controller
   ${cmd("experience")}where I've worked
   ${cmd("cv")}open my CV
   ${cmd("email")}send me a message
@@ -404,7 +415,8 @@ function terminal(id, body) {
     echo: (arg) => print(escapeHtml(arg)),
     clear: () => { out.innerHTML = ""; },
     sudo: () => print('<span class="t-err">anmol is not in the sudoers file. This incident will be reported.</span>'),
-    ros2: () => print("ros2: the arm controller runs on a real robot in Harwell, not in your browser :)"),
+    controller: () => commands.open("arm-app"),
+    ros2: () => commands.open("arm-app"),
     exit: () => close(id),
     reboot: () => {
       print('<span class="t-err">Broadcast message from anmol@kcl: the system is going down for reboot NOW!</span>');
@@ -501,11 +513,12 @@ function welcome(print, cmd) {
     `<span class="t-dim">▸</span> Into robotics, physical AI and liquid neural networks`,
     "",
     `This site works like a little computer. You can:`,
-    `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, CV`,
+    `  <span class="t-ok">✓</span> open the folders on the desktop: Experience, Research, Projects, CV`,
     `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
     `  <span class="t-ok">✓</span> or stay right here and run a command:`,
     "",
     `      ${cmd("research")}what I'm working on now`,
+    `      ${cmd("controller")}drive my robot arm in your browser`,
     `      ${cmd("experience")}where I've worked`,
     `      ${cmd("cv")}open my CV`,
     `      ${cmd("email")}send me a message`,
