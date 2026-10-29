@@ -328,6 +328,7 @@ function terminal(id, body) {
   const history = [];
   let hIndex = 0;
   let cwd = "home";
+  let waiting = null, interrupt = null; // a command waiting for a reply, and how to stop a running one
 
   // ~/Experience/Oxford Dynamics style path for a folder id
   const pathStr = (k) => (k === "home" ? "~" : pathStr(PARENT[k] || "home") + "/" + FS[k].name);
@@ -365,6 +366,27 @@ function terminal(id, body) {
       || Object.keys(FS).find((k) => FS[k].name.toLowerCase().startsWith(q));
   };
 
+  // what long-running commands (ask) use to talk to the terminal
+  const line = $(".term__line", body);
+  const io = {
+    print,
+    scroll: () => { body.scrollTop = body.scrollHeight; },
+    el(html) { const s = document.createElement("span"); s.innerHTML = html; out.append(s, "\n"); body.scrollTop = body.scrollHeight; return s; },
+    read(label) {
+      return new Promise((resolve) => {
+        waiting = { resolve, label: `<span class="term__prompt">${label}</span>` };
+        $(".term__prompt", line).outerHTML = waiting.label;
+        body.scrollTop = body.scrollHeight;
+      });
+    },
+    busy(stop, hint = true) {
+      interrupt = stop;
+      line.hidden = !!stop;
+      if (stop && hint) print('<span class="t-dim">(Esc or Ctrl+C to stop)</span>');
+      else { body.scrollTop = body.scrollHeight; if (!mobile.matches) input.focus({ preventScroll: true }); }
+    },
+  };
+
   // a command name you can click instead of typing
   const cmd = (name, pad = 12) => `<button type="button" class="t-cmd" data-cmd="${name}">${name}</button>${" ".repeat(Math.max(1, pad - name.length))}`;
 
@@ -377,6 +399,7 @@ function terminal(id, body) {
   cat &lt;file&gt;    read a file right here
   open &lt;name&gt;  open it in a window  <span class="t-dim">(open . for this folder)</span>
   ${cmd("pwd")}where am I?
+  ask &lt;question&gt; ask anything about me  <span class="t-dim">(AI on your GPU)</span>
   ${cmd("research")}what I'm working on now
   ${cmd("controller")}drive my robot arm controller
   ${cmd("experience")}where I've worked
@@ -442,6 +465,7 @@ function terminal(id, body) {
     echo: (arg) => print(escapeHtml(arg)),
     clear: () => { out.innerHTML = ""; },
     sudo: () => print('<span class="t-err">anmol is not in the sudoers file. This incident will be reported.</span>'),
+    ask: (arg) => askCommand(arg, io),
     controller: () => commands.open("arm-app"),
     ros2: () => commands.open("arm-app"),
     exit: () => close(id),
@@ -453,6 +477,18 @@ function terminal(id, body) {
   commands.dir = commands.ls;
 
   const run = (raw) => {
+    if (interrupt) return;
+    if (waiting) {
+      const reply = waiting;
+      waiting = null;
+      $(".term__prompt", line).outerHTML = prompt();
+      const echoed = document.createElement("span");
+      echoed.innerHTML = reply.label + " ";
+      echoed.append(document.createTextNode(raw + "\n"));
+      out.append(echoed);
+      reply.resolve(raw);
+      return;
+    }
     echo(raw);
     if (raw) { history.push(raw); hIndex = history.length; }
     const [name, ...rest] = raw.split(/\s+/);
@@ -462,6 +498,9 @@ function terminal(id, body) {
     body.scrollTop = body.scrollHeight;
   };
 
+  document.addEventListener("keydown", (e) => {
+    if (interrupt && body.isConnected && !body.closest(".is-inactive") && (e.key === "Escape" || (e.key === "c" && e.ctrlKey))) { e.preventDefault(); interrupt(); }
+  });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
       // complete the last word against the current folder
@@ -547,6 +586,7 @@ function welcome(print, cmd) {
     `  <span class="t-ok">✓</span> drag windows around and use the dock at the bottom`,
     `  <span class="t-ok">✓</span> or stay right here and run a command:`,
     "",
+    `      ${cmd("ask")}ask anything about me (AI on your GPU)`,
     `      ${cmd("research")}what I'm working on now`,
     `      ${cmd("experience")}where I've worked`,
     `      ${cmd("cv")}open my CV`,
