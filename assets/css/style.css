@@ -312,6 +312,11 @@ img { display: block; max-width: 100%; }
   background: rgba(30, 30, 34, .9); color: #fff; opacity: 0; transition: opacity .12s;
 }
 .dock__item:hover .dock__tip, .dock__item:focus-visible .dock__tip { opacity: 1; }
+/* icons for open windows that aren't kept in the dock grow in, and shrink away when closed */
+.dock__item--running { animation: dock-in .22s ease-out; }
+.dock__item--running.is-leaving { animation: dock-out .22s ease-in forwards; pointer-events: none; }
+@keyframes dock-in { from { width: 0; margin: 0 -3px; transform: scale(.2); opacity: 0; } }
+@keyframes dock-out { to { width: 0; margin: 0 -3px; transform: scale(.2); opacity: 0; } }
 .dock__sep { width: 1px; align-self: stretch; margin: 4px 4px; background: rgba(255, 255, 255, .25); }
 
 /* ---------- Boot ---------- */
@@ -350,10 +355,11 @@ img { display: block; max-width: 100%; }
   .timeline li { grid-template-columns: 1fr; gap: 2px; }
   .dock { width: calc(100% - 16px); justify-content: space-around; bottom: 8px; }
   .dock__item { width: 48px; height: 48px; }
-  .dock__sep, .dock__item--extra { display: none; }
+  .dock__sep, .dock__item--extra, .dock__item--running { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .win { animation: none; }
   .dock__item, .photos img { transition: none; }
+  .dock__item--running, .dock__item--running.is-leaving { animation-duration: 1ms; }
 }

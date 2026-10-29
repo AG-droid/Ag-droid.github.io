@@ -621,24 +621,61 @@ function escapeHtml(s) {
 }
 
 // ===================== Dock, desktop, clock =====================
+// Apps made of several windows show as one dock icon: arm-sim and arm-term belong to arm-app
+const OWNER = {};
+Object.keys(FS).forEach((k) => (FS[k].opens || []).forEach((w) => (OWNER[w] = k)));
+const dockKey = (id) => OWNER[id] || id;
+const winsOfKey = (key) => FS[key].opens || [key];
+// app launchers are called "Launch …", so they go by their folder's name ("Arm Controller")
+const dockName = (key) => (key === "home" ? "Home" : FS[key].type === "app" && PARENT[key] ? FS[PARENT[key]].name : FS[key].name);
+
+function dockItem(key) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "dock__item";
+  b.dataset.id = key;
+  b.setAttribute("aria-label", dockName(key));
+  b.innerHTML = iconArt(key) + `<span class="dock__tip"></span>`;
+  $(".dock__tip", b).textContent = dockName(key);
+  return b;
+}
+
 function buildDock() {
   const dock = $("#dock");
   DOCK.forEach((id) => {
     if (id === "|") { const s = document.createElement("span"); s.className = "dock__sep"; dock.append(s); return; }
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "dock__item" + (["cv", "photos"].includes(id) ? " dock__item--extra" : "");
+    const b = dockItem(id);
+    if (["cv", "photos"].includes(id)) b.classList.add("dock__item--extra");
     b.dataset.open = id;
-    b.dataset.id = id;
-    b.setAttribute("aria-label", FS[id].name);
-    b.innerHTML = iconArt(id) + `<span class="dock__tip"></span>`;
-    $(".dock__tip", b).textContent = id === "home" ? "Home" : FS[id].name;
     dock.append(b);
   });
 }
 
+// Bring back a running app's windows as they were, without opening or re-laying them out
+function restore(key) {
+  const ids = winsOfKey(key).filter((w) => wins.has(w));
+  if (!ids.length) return open(key);
+  ids.forEach((w) => { wins.get(w).el.hidden = false; focus(w); });
+}
+
+// Like a Mac: anything open that isn't kept in the dock gets an icon until its last window closes
 function syncDock() {
-  document.querySelectorAll(".dock__item").forEach((b) => b.classList.toggle("is-open", wins.has(b.dataset.id)));
+  const dock = $("#dock"), sep = $(".dock__sep", dock);
+  const running = new Set([...wins.keys()].map(dockKey).filter((k) => !DOCK.includes(k)));
+  dock.querySelectorAll(".dock__item--running").forEach((b) => {
+    if (running.has(b.dataset.id)) { if (b.classList.contains("is-leaving")) b.classList.remove("is-leaving"); return; }
+    if (b.classList.contains("is-leaving")) return;
+    b.classList.add("is-leaving");
+    setTimeout(() => b.classList.contains("is-leaving") && b.remove(), 220);
+  });
+  running.forEach((key) => {
+    if (dock.querySelector(`.dock__item--running[data-id="${key}"]`)) return;
+    const b = dockItem(key);
+    b.classList.add("dock__item--running");
+    b.addEventListener("click", () => restore(key));
+    dock.insertBefore(b, sep);
+  });
+  dock.querySelectorAll(".dock__item").forEach((b) => b.classList.toggle("is-open", winsOfKey(b.dataset.id).some((w) => wins.has(w))));
 }
 
 function buildDesktop() {
