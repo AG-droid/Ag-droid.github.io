@@ -21,6 +21,7 @@ Your NOTES come from your website, its README and your CV. Notes that say "Anmol
 You know your website well: its features, its terminal commands and the things to try on it, like driving the UR7e robot arm in Projects or chatting with you (an AI agent). Help visitors use it and point them to the fun parts. When asked what's cool, fun or worth trying, lead with driving the UR7e robot arm (Projects → Arm Controller → Launch Controller, or type "controller"), then mention other things.
 Rules:
 - For facts about yourself (work, studies, research, skills, dates, places, people), use only what the NOTES say. Never invent, guess or embellish.
+- Never say anything about your personal life (relationships, family, religion, health, home) that the NOTES don't state. If asked, say you keep your personal life off this site.
 - Be friendly but factual: don't add feelings, opinions, hopes or plans that the NOTES don't mention.
 - Use the dates in the NOTES and today's date to get tenses right: something that has ended is in the past.
 - If the NOTES don't cover something, say honestly that it isn't on your site and suggest emailing anmol.goyal@kcl.ac.uk.
@@ -44,6 +45,11 @@ const PRIVATE = `I don't share personal details like that here. The best way to 
 const AUTHORSHIP = /\b(did|do) you (write|code|program|build|make|develop) (the |this |all |any )?(code|site|website|it|yourself|everything)\b|\bwho (wrote|coded|programmed|built|made|developed)\b|\b(ai|claude|chatgpt|gpt|copilot|llm)[- ](written|generated|built|made|coded)\b|\bdid (an? )?(ai|claude|chatgpt|gpt|copilot|llm) (write|build|make|code)\b|\bwhat did you do (on|for|with) (this|the) (site|website|project)\b|\byour (role|part|contribution)\b|\bwrite (it|the code|this) (all )?yourself\b/i;
 const ABOUT_SITE = /\b(site|website|page|portfolio|code|codebase|this|it|yourself|everything|you|agent)\b/i;
 const AUTHORS = "I designed and led this site, and Claude Code, an AI coding agent, wrote most of the implementation. My part was deciding what to build and how it should behave, setting the requirements, reviewing what came back, and testing and debugging it on real devices until it worked.";
+// my personal life isn't on the site, so questions about it never reach a model that might make something up
+const PERSONAL_LIFE = /\bare you (single|married|taken|engaged|seeing (anyone|someone)|dating|in a relationship|gay|straight|religious)\b|\b(girl ?friend|boy ?friend|wife|husband|spouse|fianc[eé]e?|crush|dating|love life|married|marriage|relationship status|sexuality|sexual orientation)\b|\byour (partner|kids|children|family|parents|siblings|religion|ethnicity|health)\b|\b(do you have|got) (a |any )?(partner|kids|children|siblings|brothers?|sisters?|special someone)\b|\b(who|what) do you (love|date)\b|\b(someone special|special someone|(anyone|someone) (special )?in your life)\b|\bwho do you live with\b|\bdo you live (alone|with)\b|\b(love|romantic|personal) life\b/i;
+// and in case one slips through in other words, a reply claiming something about it is replaced
+const LIFE_CLAIM = /\bI(?:'m| am)(?: not)? (?:single|married|engaged|taken|dating|seeing (?:anyone|someone)|in a relationship)\b|\b(?:my|a) (?:girl ?friend|boy ?friend|wife|husband|spouse|fianc[eé]e?|partner)\b|\bI (?:don't |do not )?live (?:with|alone|on my own|by myself)\b|\bmy (?:family|parents|mum|mom|dad|brother|sister|kids|children|siblings)\b|\b(?:someone special|special someone)\b|\bin a relationship\b/i;
+const OFF_LIMITS = "I keep my personal life off this site, so I'll pass on that one. Happy to talk about my work, my studies, or what's fun to try here!";
 const IDK = `That's not something I've put on my site, so I won't guess. Drop me an email at anmol.goyal@kcl.ac.uk and I'll tell you.`;
 // repeated after the question: small models follow what they read last
 const ASK_REMINDER = `Reply as Anmol in the first person, using only facts from the NOTES. Don't connect separate facts unless the NOTES connect them, and never mention "NOTES". If the NOTES don't cover it, say it isn't on your site and suggest emailing anmol.goyal@kcl.ac.uk.`;
@@ -384,6 +390,10 @@ async function answer(io, index, question, history = [], prefix = "") {
     io.print(prefix + escapeHtml(AUTHORS));
     return AUTHORS;
   }
+  if (PERSONAL_LIFE.test(question)) {
+    io.print(prefix + escapeHtml(OFF_LIMITS));
+    return OFF_LIMITS;
+  }
   if (PERSONAL.test(question) && !/\b(module|course|model|version)\b/i.test(question)) {
     io.print(prefix + escapeHtml(PRIVATE));
     return PRIVATE;
@@ -427,6 +437,7 @@ async function answer(io, index, question, history = [], prefix = "") {
     });
     for await (const chunk of stream) {
       text += chunk.choices[0]?.delta?.content || "";
+      if (LIFE_CLAIM.test(text)) { askEngine.interruptGenerate(); text = OFF_LIMITS; hits = []; out.innerHTML = prefix + escapeHtml(text); break; }
       out.innerHTML = prefix + escapeHtml(text.replace(/\*\*|__|^#+\s*/gm, "").trim());
       io.scroll();
     }

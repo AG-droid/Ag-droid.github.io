@@ -186,6 +186,7 @@ There are also a couple of easter eggs. Try `sudo`.
 - **Safety.**
   - Attempts to override the agent ("ignore your instructions", "you are now…", "pretend to be…") get a fixed reply and never reach the model.
   - Questions about personal details like a phone number, address or age get a fixed reply pointing to email, so the model can't guess.
+  - Questions about my personal life (relationships, family and so on) get a fixed reply too, and if a model still makes a claim about it in other words, that reply is replaced before you can read it.
   - Messages are capped at 300 characters, and everything the model writes is escaped before it's shown, so it can't inject anything into the page.
   - The agent can only open things from its fixed list; the model itself can't trigger anything.
   - The model files are pinned: weights to an exact Hugging Face revision, and the compiled runtime to an exact commit with its SHA-384 hash checked before it runs.
